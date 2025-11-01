@@ -135,6 +135,9 @@
             padding: 1.5rem;
             box-shadow: var(--shadow);
             margin-bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         
         .game-title {
@@ -143,22 +146,33 @@
             margin-bottom: 1rem;
             color: var(--primary-dark);
             text-align: center;
+            width: 100%;
         }
         
         .game-container {
             width: 100%;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
             margin-bottom: 1rem;
+            position: relative;
         }
         
-        #game-player {
-            width: 800px;
-            height: 600px;
-            max-width: 100%;
+        #game-player-wrapper {
+            position: relative;
+            display: inline-block;
             border: 2px solid var(--primary-light);
             border-radius: 4px;
             background-color: #000;
+            overflow: hidden;
+            max-width: 100%;
+            transition: width 0.3s, height 0.3s;
+        }
+        
+        #game-player {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
         
         .game-controls {
@@ -167,6 +181,8 @@
             gap: 1rem;
             margin-top: 1rem;
             flex-wrap: wrap;
+            width: 100%;
+            max-width: 800px;
         }
         
         .control-btn {
@@ -182,6 +198,20 @@
         
         .control-btn:hover {
             background-color: var(--primary-dark);
+        }
+        
+        .control-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .scale-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 0.5rem;
+            color: var(--primary-dark);
+            font-weight: bold;
         }
         
         /* 游戏描述 */
@@ -269,8 +299,19 @@
                 justify-content: center;
             }
             
-            #game-player {
-                height: 400px;
+            #game-player-wrapper {
+                width: 100% !important;
+                height: auto !important;
+            }
+            
+            .game-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-btn {
+                width: 100%;
+                max-width: 200px;
             }
         }
         
@@ -282,20 +323,6 @@
             .nav-links {
                 flex-direction: column;
                 gap: 0.5rem;
-            }
-            
-            #game-player {
-                height: 300px;
-            }
-            
-            .game-controls {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .control-btn {
-                width: 100%;
-                max-width: 200px;
             }
         }
     </style>
@@ -347,6 +374,15 @@
         // 全局变量
         let currentGameInstance = null;
         let currentScale = 1.0;
+        const MIN_SCALE = 0.5;
+        const MAX_SCALE = 2.0;
+        const DEFAULT_WIDTH = 800;
+        const DEFAULT_HEIGHT = 600;
+        
+        // 获取网站根路径
+        function getBaseUrl() {
+            return window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+        }
         
         // 加载游戏数据
         document.addEventListener('DOMContentLoaded', function() {
@@ -388,19 +424,23 @@
         // 渲染游戏页面
         function renderGame(game) {
             const container = document.getElementById('game-content');
-            const gamePath = `games/${game.id}/${game.file}`;
             
             container.innerHTML = `
                 <div class="game-area">
                     <h1 class="game-title">${game.name}</h1>
                     <div class="game-container">
-                        <div id="game-player"></div>
+                        <div id="game-player-wrapper" style="width: ${DEFAULT_WIDTH}px; height: ${DEFAULT_HEIGHT}px;">
+                            <div id="game-player"></div>
+                        </div>
                     </div>
                     <div class="game-controls">
                         <button class="control-btn" id="zoom-in">放大</button>
                         <button class="control-btn" id="zoom-out">缩小</button>
                         <button class="control-btn" id="fullscreen">全屏</button>
                         <button class="control-btn" id="reset">重置大小</button>
+                    </div>
+                    <div class="scale-info">
+                        当前缩放: <span id="scale-value">100%</span>
                     </div>
                 </div>
                 <div class="game-description">
@@ -415,20 +455,20 @@
             
             // 等待Ruffle加载完成后加载游戏
             waitForRuffle().then(() => {
-                loadGame(gamePath);
+                loadGame(game);
             }).catch(error => {
                 console.error('Ruffle加载失败:', error);
                 showError('Flash模拟器加载失败，请刷新页面重试');
             });
             
             // 设置控制按钮事件
-            document.getElementById('zoom-in').addEventListener('click', zoomIn);
-            document.getElementById('zoom-out').addEventListener('click', zoomOut);
-            document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
-            document.getElementById('reset').addEventListener('click', resetSize);
+            setupControls();
             
             // 加载评论
             loadComments(game.id);
+            
+            // 更新缩放按钮状态
+            updateZoomButtons();
         }
         
         // 等待Ruffle加载完成
@@ -458,8 +498,22 @@
             });
         }
         
+        // 设置控制按钮事件
+        function setupControls() {
+            document.getElementById('zoom-in').addEventListener('click', zoomIn);
+            document.getElementById('zoom-out').addEventListener('click', zoomOut);
+            document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
+            document.getElementById('reset').addEventListener('click', resetSize);
+            
+            // 监听全屏变化
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+            document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+        }
+        
         // 加载游戏
-        function loadGame(gamePath) {
+        function loadGame(game) {
             const player = document.getElementById('game-player');
             player.innerHTML = '';
             
@@ -469,19 +523,22 @@
                 currentGameInstance = ruffle.createPlayer();
                 player.appendChild(currentGameInstance);
                 
-                // 设置游戏容器大小
-                const containerWidth = player.offsetWidth;
-                const containerHeight = player.offsetHeight;
+                // 构建绝对路径
+                const baseUrl = getBaseUrl();
+                const gamePath = `${baseUrl}/games/${game.id}/${game.file}`;
                 
-                currentGameInstance.style.width = '100%';
-                currentGameInstance.style.height = '100%';
+                console.log('Loading game from:', gamePath);
                 
                 // 加载游戏文件
                 currentGameInstance.load({
                     url: gamePath,
-                    width: containerWidth,
-                    height: containerHeight,
-                    backgroundColor: '#000000'
+                    width: DEFAULT_WIDTH,
+                    height: DEFAULT_HEIGHT,
+                    backgroundColor: '#000000',
+                    // 设置Ruffle配置，使游戏内资源也使用绝对路径
+                    parameters: {
+                        base: `${baseUrl}/games/${game.id}/`
+                    }
                 }).catch(error => {
                     console.error('Error loading game:', error);
                     showError('加载游戏失败，请检查游戏文件是否存在');
@@ -494,46 +551,72 @@
         
         // 放大游戏
         function zoomIn() {
-            if (currentScale < 2.0) {
+            if (currentScale < MAX_SCALE) {
                 currentScale += 0.1;
-                updateGameScale();
+                updateGameSize();
+                updateZoomButtons();
             }
         }
         
         // 缩小游戏
         function zoomOut() {
-            if (currentScale > 0.5) {
+            if (currentScale > MIN_SCALE) {
                 currentScale -= 0.1;
-                updateGameScale();
+                updateGameSize();
+                updateZoomButtons();
             }
         }
         
         // 重置游戏大小
         function resetSize() {
             currentScale = 1.0;
-            updateGameScale();
+            updateGameSize();
+            updateZoomButtons();
         }
         
-        // 更新游戏缩放
-        function updateGameScale() {
-            const player = document.getElementById('game-player');
-            if (player && currentGameInstance) {
-                player.style.transform = `scale(${currentScale})`;
-                player.style.transformOrigin = 'center center';
+        // 更新游戏尺寸
+        function updateGameSize() {
+            const wrapper = document.getElementById('game-player-wrapper');
+            const scaleValue = document.getElementById('scale-value');
+            
+            if (wrapper) {
+                const newWidth = DEFAULT_WIDTH * currentScale;
+                const newHeight = DEFAULT_HEIGHT * currentScale;
+                
+                wrapper.style.width = `${newWidth}px`;
+                wrapper.style.height = `${newHeight}px`;
+                
+                // 更新缩放百分比显示
+                scaleValue.textContent = `${Math.round(currentScale * 100)}%`;
+                
+                // 更新Ruffle播放器尺寸
+                if (currentGameInstance) {
+                    currentGameInstance.style.width = `${newWidth}px`;
+                    currentGameInstance.style.height = `${newHeight}px`;
+                }
             }
+        }
+        
+        // 更新缩放按钮状态
+        function updateZoomButtons() {
+            const zoomInBtn = document.getElementById('zoom-in');
+            const zoomOutBtn = document.getElementById('zoom-out');
+            
+            zoomInBtn.disabled = currentScale >= MAX_SCALE;
+            zoomOutBtn.disabled = currentScale <= MIN_SCALE;
         }
         
         // 切换全屏
         function toggleFullscreen() {
-            const player = document.getElementById('game-player');
+            const wrapper = document.getElementById('game-player-wrapper');
             
             if (!document.fullscreenElement) {
-                if (player.requestFullscreen) {
-                    player.requestFullscreen();
-                } else if (player.webkitRequestFullscreen) {
-                    player.webkitRequestFullscreen();
-                } else if (player.msRequestFullscreen) {
-                    player.msRequestFullscreen();
+                if (wrapper.requestFullscreen) {
+                    wrapper.requestFullscreen();
+                } else if (wrapper.webkitRequestFullscreen) {
+                    wrapper.webkitRequestFullscreen();
+                } else if (wrapper.msRequestFullscreen) {
+                    wrapper.msRequestFullscreen();
                 }
             } else {
                 if (document.exitFullscreen) {
@@ -543,6 +626,17 @@
                 } else if (document.msExitFullscreen) {
                     document.msExitFullscreen();
                 }
+            }
+        }
+        
+        // 处理全屏变化
+        function handleFullscreenChange() {
+            const fullscreenBtn = document.getElementById('fullscreen');
+            
+            if (document.fullscreenElement) {
+                fullscreenBtn.textContent = '退出全屏';
+            } else {
+                fullscreenBtn.textContent = '全屏';
             }
         }
         
