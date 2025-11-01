@@ -235,6 +235,28 @@
             cursor: pointer;
         }
         
+        /* 加载动画 */
+        .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--accent-color);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         /* 响应式设计 */
         @media (max-width: 768px) {
             .nav-container {
@@ -322,6 +344,10 @@
             e.preventDefault();
         });
         
+        // 全局变量
+        let currentGameInstance = null;
+        let currentScale = 1.0;
+        
         // 加载游戏数据
         document.addEventListener('DOMContentLoaded', function() {
             // 获取URL参数
@@ -374,6 +400,7 @@
                         <button class="control-btn" id="zoom-in">放大</button>
                         <button class="control-btn" id="zoom-out">缩小</button>
                         <button class="control-btn" id="fullscreen">全屏</button>
+                        <button class="control-btn" id="reset">重置大小</button>
                     </div>
                 </div>
                 <div class="game-description">
@@ -386,16 +413,49 @@
                 </div>
             `;
             
-            // 加载游戏
-            loadGame(gamePath);
+            // 等待Ruffle加载完成后加载游戏
+            waitForRuffle().then(() => {
+                loadGame(gamePath);
+            }).catch(error => {
+                console.error('Ruffle加载失败:', error);
+                showError('Flash模拟器加载失败，请刷新页面重试');
+            });
             
             // 设置控制按钮事件
             document.getElementById('zoom-in').addEventListener('click', zoomIn);
             document.getElementById('zoom-out').addEventListener('click', zoomOut);
             document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
+            document.getElementById('reset').addEventListener('click', resetSize);
             
             // 加载评论
             loadComments(game.id);
+        }
+        
+        // 等待Ruffle加载完成
+        function waitForRuffle() {
+            return new Promise((resolve, reject) => {
+                // 如果Ruffle已经加载
+                if (window.RufflePlayer && window.RufflePlayer.newest) {
+                    resolve();
+                    return;
+                }
+                
+                // 否则等待Ruffle加载
+                let attempts = 0;
+                const maxAttempts = 50; // 最多等待5秒
+                
+                const checkRuffle = setInterval(() => {
+                    attempts++;
+                    
+                    if (window.RufflePlayer && window.RufflePlayer.newest) {
+                        clearInterval(checkRuffle);
+                        resolve();
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(checkRuffle);
+                        reject(new Error('Ruffle加载超时'));
+                    }
+                }, 100);
+            });
         }
         
         // 加载游戏
@@ -403,42 +463,63 @@
             const player = document.getElementById('game-player');
             player.innerHTML = '';
             
-            // 使用Ruffle加载游戏
-            const ruffle = window.RufflePlayer.newest();
-            const playerInstance = ruffle.createPlayer();
-            player.appendChild(playerInstance);
-            
-            playerInstance.load({
-                url: gamePath,
-                width: player.offsetWidth,
-                height: player.offsetHeight
-            }).catch(error => {
-                console.error('Error loading game:', error);
-                showError('加载游戏失败');
-            });
+            try {
+                // 使用Ruffle加载游戏
+                const ruffle = window.RufflePlayer.newest();
+                currentGameInstance = ruffle.createPlayer();
+                player.appendChild(currentGameInstance);
+                
+                // 设置游戏容器大小
+                const containerWidth = player.offsetWidth;
+                const containerHeight = player.offsetHeight;
+                
+                currentGameInstance.style.width = '100%';
+                currentGameInstance.style.height = '100%';
+                
+                // 加载游戏文件
+                currentGameInstance.load({
+                    url: gamePath,
+                    width: containerWidth,
+                    height: containerHeight,
+                    backgroundColor: '#000000'
+                }).catch(error => {
+                    console.error('Error loading game:', error);
+                    showError('加载游戏失败，请检查游戏文件是否存在');
+                });
+            } catch (error) {
+                console.error('Error creating Ruffle player:', error);
+                showError('创建游戏播放器失败');
+            }
         }
         
         // 放大游戏
         function zoomIn() {
-            const player = document.getElementById('game-player');
-            const currentWidth = player.offsetWidth;
-            const currentHeight = player.offsetHeight;
-            
-            if (currentWidth < 1200) {
-                player.style.width = (currentWidth + 100) + 'px';
-                player.style.height = (currentHeight + 75) + 'px';
+            if (currentScale < 2.0) {
+                currentScale += 0.1;
+                updateGameScale();
             }
         }
         
         // 缩小游戏
         function zoomOut() {
+            if (currentScale > 0.5) {
+                currentScale -= 0.1;
+                updateGameScale();
+            }
+        }
+        
+        // 重置游戏大小
+        function resetSize() {
+            currentScale = 1.0;
+            updateGameScale();
+        }
+        
+        // 更新游戏缩放
+        function updateGameScale() {
             const player = document.getElementById('game-player');
-            const currentWidth = player.offsetWidth;
-            const currentHeight = player.offsetHeight;
-            
-            if (currentWidth > 400) {
-                player.style.width = (currentWidth - 100) + 'px';
-                player.style.height = (currentHeight - 75) + 'px';
+            if (player && currentGameInstance) {
+                player.style.transform = `scale(${currentScale})`;
+                player.style.transformOrigin = 'center center';
             }
         }
         
