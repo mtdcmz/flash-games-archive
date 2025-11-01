@@ -166,8 +166,7 @@
             background-color: #000;
             overflow: hidden;
             max-width: 100%;
-            width: 800px;
-            height: 600px;
+            /* 移除固定宽高，由JS动态设置 */
         }
         
         #game-player {
@@ -313,9 +312,8 @@
             }
             
             #game-player-wrapper {
-                width: 100%;
-                height: auto;
-                aspect-ratio: 4 / 3;
+                /* 平板设备上保持最大宽度限制 */
+                max-width: 90vw;
             }
         }
         
@@ -366,9 +364,7 @@
             }
             
             #game-player-wrapper {
-                width: 100%;
-                height: auto;
-                aspect-ratio: 4 / 3;
+                max-width: 95vw;
                 border-width: 1px;
             }
             
@@ -484,8 +480,8 @@
         // 全局变量
         let currentGameInstance = null;
         let currentGameData = null;
-        let gameOriginalWidth = 800;
-        let gameOriginalHeight = 600;
+        let gameOriginalWidth = 800; // 默认值
+        let gameOriginalHeight = 600; // 默认值
         let currentScale = 1;
         const scaleSteps = [0.5, 0.75, 1, 1.25, 1.5, 2];
         let currentScaleIndex = 2; // 默认100%缩放
@@ -674,25 +670,25 @@
                     console.log('Game loaded successfully');
                     console.log('Game base path set to:', gameBaseUrl);
                     
-                    // 获取游戏原始尺寸并设置缩放
-                    if (currentGameInstance.movieWidth && currentGameInstance.movieHeight) {
-                        gameOriginalWidth = currentGameInstance.movieWidth;
-                        gameOriginalHeight = currentGameInstance.movieHeight;
-                        console.log(`Game original size: ${gameOriginalWidth}x${gameOriginalHeight}`);
-                    }
-                    
-                    // 设置Ruffle缩放配置
-                    if (currentGameInstance.config) {
-                        currentGameInstance.config.scale = 'showAll';
-                        currentGameInstance.config.align = 'center';
-                    }
-                    
-                    // 应用初始缩放
-                    applyScale();
-                    
-                    if (loadingElement) {
-                        loadingElement.style.display = 'none';
-                    }
+                    // 等待Ruffle获取游戏尺寸
+                    setTimeout(() => {
+                        // 获取游戏原始尺寸并设置缩放
+                        if (currentGameInstance.movieWidth && currentGameInstance.movieHeight) {
+                            gameOriginalWidth = currentGameInstance.movieWidth;
+                            gameOriginalHeight = currentGameInstance.movieHeight;
+                            console.log(`Game original size: ${gameOriginalWidth}x${gameOriginalHeight}`);
+                            
+                            // 应用初始缩放
+                            applyScale();
+                        } else {
+                            console.warn('无法获取游戏尺寸，使用默认尺寸');
+                            applyScale();
+                        }
+                        
+                        if (loadingElement) {
+                            loadingElement.style.display = 'none';
+                        }
+                    }, 100);
                     
                 }).catch(error => {
                     console.error('Error loading game:', error);
