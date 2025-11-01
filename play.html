@@ -313,23 +313,6 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* 隐藏Ruffle默认的加载动画和右键菜单 */
-        ruffle-player {
-            width: 100%;
-            height: 100%;
-        }
-        
-        /* 隐藏Ruffle的默认加载界面 */
-        ruffle-player::part(splash-screen),
-        ruffle-player::part(play-button) {
-            display: none !important;
-        }
-        
-        /* 隐藏Ruffle的右键菜单 */
-        ruffle-player::part(context-menu) {
-            display: none !important;
-        }
-        
         /* 响应式设计 */
         @media (max-width: 768px) {
             .nav-container {
@@ -417,13 +400,31 @@
         // 全局变量
         let currentGameInstance = null;
         let currentScale = 1.0;
+        let currentGameData = null;
         const MIN_SCALE = 0.5;
-        const MAX_SCALE = 1.5; // 修改最大缩放限制为150%
+        const MAX_SCALE = 1.5; // 修改为150%
         const DEFAULT_WIDTH = 800;
         const DEFAULT_HEIGHT = 600;
-        let currentGameData = null; // 保存当前游戏数据用于重玩
-        let isFullscreen = false; // 跟踪全屏状态
-        let savedScale = 1.0; // 保存进入全屏前的缩放比例
+        
+        // 配置Ruffle全局设置（包括自定义字体）
+        window.RufflePlayer = window.RufflePlayer || {};
+        window.RufflePlayer.config = {
+            // 配置自定义字体
+            fontSources: ["games/fonts.swf"],
+            defaultFonts: {
+                sans: ["微软雅黑"],
+            },
+            // 禁用Ruffle默认加载动画
+            splashScreen: false,
+            showSwfDownload: false,
+            polyfills: true,
+            autoplay: 'on',
+            unmuteOverlay: 'hidden',
+            backgroundColor: '#000000',
+            quality: 'high',
+            scale: 'showAll',
+            align: 'center'
+        };
         
         // 获取网站根路径
         function getBaseUrl() {
@@ -460,6 +461,7 @@
                 .then(data => {
                     const game = data.find(g => g.id === gameId);
                     if (game) {
+                        currentGameData = game;
                         renderGame(game);
                     } else {
                         showError('找不到指定的游戏');
@@ -473,7 +475,6 @@
         
         // 渲染游戏页面
         function renderGame(game) {
-            currentGameData = game; // 保存游戏数据
             const container = document.getElementById('game-content');
             
             container.innerHTML = `
@@ -560,13 +561,23 @@
             document.getElementById('zoom-out').addEventListener('click', zoomOut);
             document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
             document.getElementById('reset').addEventListener('click', resetSize);
-            document.getElementById('replay').addEventListener('click', replayGame); // 添加重玩按钮事件
+            document.getElementById('replay').addEventListener('click', replayGame);
             
             // 监听全屏变化
             document.addEventListener('fullscreenchange', handleFullscreenChange);
             document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
             document.addEventListener('mozfullscreenchange', handleFullscreenChange);
             document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+            
+            // 监听窗口大小变化，在全屏时自动调整游戏尺寸
+            window.addEventListener('resize', handleWindowResize);
+        }
+        
+        // 重玩游戏
+        function replayGame() {
+            if (currentGameData) {
+                loadGame(currentGameData);
+            }
         }
         
         // 加载游戏
@@ -588,31 +599,6 @@
                 console.log('Loading game from:', gamePath);
                 console.log('Game base URL:', gameBaseUrl);
                 
-                // 设置Ruffle配置
-                const config = {
-                    // 游戏文件的完整URL
-                    url: gamePath,
-                    // 设置基础路径，游戏内的相对路径将相对于此路径解析
-                    base: gameBaseUrl,
-                    width: DEFAULT_WIDTH,
-                    height: DEFAULT_HEIGHT,
-                    backgroundColor: '#000000',
-                    // 允许脚本访问和网络请求
-                    allowScriptAccess: "always",
-                    allowNetworking: "all",
-                    // 设置质量和缩放模式
-                    quality: "high",
-                    scale: "showall",
-                    contextMenu: false,
-                    // Flash参数
-                    parameters: {
-                        // 再次在parameters中设置base，确保兼容性
-                        base: gameBaseUrl,
-                        allowScriptAccess: "always",
-                        allowNetworking: "all"
-                    }
-                };
-                
                 // 显示Ruffle加载动画
                 const loadingElement = document.getElementById('ruffle-loading');
                 if (loadingElement) {
@@ -620,13 +606,22 @@
                 }
                 
                 // 加载游戏文件
-                currentGameInstance.load(config).then(() => {
+                currentGameInstance.load({
+                    url: gamePath,
+                    base: gameBaseUrl,
+                    width: DEFAULT_WIDTH,
+                    height: DEFAULT_HEIGHT
+                }).then(() => {
                     console.log('Game loaded successfully');
                     console.log('Game base path set to:', gameBaseUrl);
                     // 隐藏加载动画
                     if (loadingElement) {
                         loadingElement.style.display = 'none';
                     }
+                    
+                    // 确保游戏尺寸正确
+                    updateGameSize();
+                    
                 }).catch(error => {
                     console.error('Error loading game:', error);
                     // 隐藏加载动画
@@ -634,13 +629,6 @@
                         loadingElement.style.display = 'none';
                     }
                     showError('加载游戏失败，请检查游戏文件是否存在');
-                });
-                
-                // 监听Ruffle实例的ready事件，确保正确设置尺寸
-                currentGameInstance.addEventListener('loadedmetadata', function() {
-                    console.log('Ruffle实例已加载元数据');
-                    // 确保Ruffle实例尺寸正确
-                    updateGameSize();
                 });
                 
             } catch (error) {
@@ -679,62 +667,29 @@
             updateZoomButtons();
         }
         
-        function replayGame() {
-            if (currentGameData) {
-                // 重置缩放
-                currentScale = 1.0;
-                // 重新加载游戏
-                loadGame(currentGameData);
-                updateZoomButtons();
-            }
-        }
-        
         // 更新游戏尺寸
         function updateGameSize() {
             const wrapper = document.getElementById('game-player-wrapper');
             const scaleValue = document.getElementById('scale-value');
             
             if (wrapper) {
-                if (isFullscreen) {
-                    const screenWidth = window.screen.width;
-                    const screenHeight = window.screen.height;
+                const newWidth = DEFAULT_WIDTH * currentScale;
+                const newHeight = DEFAULT_HEIGHT * currentScale;
+                
+                wrapper.style.width = `${newWidth}px`;
+                wrapper.style.height = `${newHeight}px`;
+                
+                // 更新缩放百分比显示
+                scaleValue.textContent = `${Math.round(currentScale * 100)}%`;
+                
+                // 更新Ruffle播放器尺寸
+                if (currentGameInstance) {
+                    currentGameInstance.style.width = `${newWidth}px`;
+                    currentGameInstance.style.height = `${newHeight}px`;
                     
-                    // 计算适配屏幕的缩放比例，保持游戏宽高比
-                    const scaleX = screenWidth / DEFAULT_WIDTH;
-                    const scaleY = screenHeight / DEFAULT_HEIGHT;
-                    const fitScale = Math.min(scaleX, scaleY);
-                    
-                    const newWidth = DEFAULT_WIDTH * fitScale;
-                    const newHeight = DEFAULT_HEIGHT * fitScale;
-                    
-                    wrapper.style.width = `${newWidth}px`;
-                    wrapper.style.height = `${newHeight}px`;
-                    
-                    // 更新Ruffle播放器尺寸
-                    if (currentGameInstance) {
-                        currentGameInstance.style.width = `${newWidth}px`;
-                        currentGameInstance.style.height = `${newHeight}px`;
-                    }
-                } else {
-                    // 正常模式，使用当前缩放比例
-                    const newWidth = DEFAULT_WIDTH * currentScale;
-                    const newHeight = DEFAULT_HEIGHT * currentScale;
-                    
-                    wrapper.style.width = `${newWidth}px`;
-                    wrapper.style.height = `${newHeight}px`;
-                    
-                    // 更新缩放百分比显示
-                    scaleValue.textContent = `${Math.round(currentScale * 100)}%`;
-                    
-                    // 更新Ruffle播放器尺寸
-                    if (currentGameInstance) {
-                        currentGameInstance.style.width = `${newWidth}px`;
-                        currentGameInstance.style.height = `${newHeight}px`;
-                        
-                        // 尝试调用Ruffle的内部方法重新调整大小
-                        if (currentGameInstance.resize) {
-                            currentGameInstance.resize(newWidth, newHeight);
-                        }
+                    // 调用Ruffle的resize方法（如果可用）
+                    if (currentGameInstance.resize) {
+                        currentGameInstance.resize(newWidth, newHeight);
                     }
                 }
             }
@@ -778,36 +733,60 @@
             
             if (document.fullscreenElement) {
                 fullscreenBtn.textContent = '退出全屏';
-                isFullscreen = true;
-                savedScale = currentScale; // 保存当前缩放比例
-                updateGameSize(); // 调整为全屏尺寸
+                // 全屏时自动调整游戏尺寸
+                adjustGameSizeForFullscreen();
             } else {
                 fullscreenBtn.textContent = '全屏';
-                isFullscreen = false;
-                currentScale = savedScale; // 恢复之前的缩放比例
-                updateGameSize(); // 恢复原始尺寸
+                // 退出全屏时恢复之前的缩放
+                updateGameSize();
             }
+        }
+        
+        // 处理窗口大小变化
+        function handleWindowResize() {
+            if (document.fullscreenElement) {
+                adjustGameSizeForFullscreen();
+            }
+        }
+        
+        // 全屏时调整游戏尺寸
+        function adjustGameSizeForFullscreen() {
+            if (!document.fullscreenElement) return;
+            
+            const wrapper = document.getElementById('game-player-wrapper');
+            const availableWidth = window.innerWidth - 40; // 留出边距
+            const availableHeight = window.innerHeight - 200; // 留出控件空间
+            
+            // 计算保持宽高比的最大尺寸
+            const widthRatio = availableWidth / DEFAULT_WIDTH;
+            const heightRatio = availableHeight / DEFAULT_HEIGHT;
+            const optimalScale = Math.min(widthRatio, heightRatio, MAX_SCALE);
+            
+            currentScale = optimalScale;
+            updateGameSize();
+            updateZoomButtons();
         }
         
         // 加载评论
         function loadComments(gameId) {
             const commentsContainer = document.getElementById('giscus-comments');
             
+            // 使用提供的giscus配置
             const script = document.createElement('script');
             script.src = "https://giscus.app/client.js";
             script.setAttribute('data-repo', "mtdcmz/flash-games-archive");
             script.setAttribute('data-repo-id', "R_kgDOQNNeeg");
             script.setAttribute('data-category', "Announcements");
             script.setAttribute('data-category-id', "DIC_kwDOQNNees4CxVHE");
-            script.setAttribute('data-mapping', "specific"); // 使用specific映射
-            script.setAttribute('data-term', `game-${gameId}`); // 使用游戏ID作为唯一标识
-            script.setAttribute('data-strict', "0");
-            script.setAttribute('data-reactions-enabled', "1");
-            script.setAttribute('data-emit-metadata', "0");
-            script.setAttribute('data-input-position', "bottom");
-            script.setAttribute('data-theme', "preferred_color_scheme");
-            script.setAttribute('data-lang', "zh-CN");
-            script.setAttribute('crossorigin', "anonymous");
+            script.setAttribute('data-mapping', 'specific'); // 使用specific映射
+            script.setAttribute('data-term', gameId); // 使用游戏ID作为term
+            script.setAttribute('data-strict', '0');
+            script.setAttribute('data-reactions-enabled', '1');
+            script.setAttribute('data-emit-metadata', '0');
+            script.setAttribute('data-input-position', 'bottom');
+            script.setAttribute('data-theme', 'preferred_color_scheme');
+            script.setAttribute('data-lang', 'zh-CN');
+            script.setAttribute('crossorigin', 'anonymous');
             script.async = true;
             
             commentsContainer.appendChild(script);
