@@ -557,28 +557,36 @@
                 currentGameInstance = ruffle.createPlayer();
                 player.appendChild(currentGameInstance);
                 
-                // 构建绝对路径 - 确保路径指向游戏所在目录
                 const baseUrl = getBaseUrl();
                 const gamePath = `${baseUrl}/games/${game.id}/${game.file}`;
+                // 重要：base必须以斜杠结尾，这样Flash才能正确解析相对路径
                 const gameBaseUrl = `${baseUrl}/games/${game.id}/`;
                 
                 console.log('Loading game from:', gamePath);
                 console.log('Game base URL:', gameBaseUrl);
                 
-                // 设置Ruffle配置，使游戏内资源也使用绝对路径
+                // 设置Ruffle配置
                 const config = {
+                    // 游戏文件的完整URL
                     url: gamePath,
+                    // 设置基础路径，游戏内的相对路径将相对于此路径解析
+                    base: gameBaseUrl,
                     width: DEFAULT_WIDTH,
                     height: DEFAULT_HEIGHT,
                     backgroundColor: '#000000',
-                    // 设置Ruffle配置，使游戏内资源也使用绝对路径
+                    // 允许脚本访问和网络请求
+                    allowScriptAccess: "always",
+                    allowNetworking: "all",
+                    // 设置质量和缩放模式
+                    quality: "high",
+                    scale: "showall",
+                    // Flash参数
                     parameters: {
+                        // 再次在parameters中设置base，确保兼容性
                         base: gameBaseUrl,
-                        movie: gamePath
-                    },
-                    // 设置允许跨域请求
-                    allowScriptAccess: true,
-                    allowNetworking: "all"
+                        allowScriptAccess: "always",
+                        allowNetworking: "all"
+                    }
                 };
                 
                 // 显示Ruffle加载动画
@@ -590,6 +598,7 @@
                 // 加载游戏文件
                 currentGameInstance.load(config).then(() => {
                     console.log('Game loaded successfully');
+                    console.log('Game base path set to:', gameBaseUrl);
                     // 隐藏加载动画
                     if (loadingElement) {
                         loadingElement.style.display = 'none';
