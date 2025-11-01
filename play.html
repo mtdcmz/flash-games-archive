@@ -381,7 +381,11 @@
         
         // 获取网站根路径
         function getBaseUrl() {
-            return window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+            // 获取当前页面的完整URL
+            const currentUrl = window.location.href;
+            // 移除文件名部分，只保留目录路径
+            const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
+            return baseUrl;
         }
         
         // 加载游戏数据
@@ -523,14 +527,15 @@
                 currentGameInstance = ruffle.createPlayer();
                 player.appendChild(currentGameInstance);
                 
-                // 构建绝对路径
+                // 构建绝对路径 - 确保路径指向游戏所在目录
                 const baseUrl = getBaseUrl();
                 const gamePath = `${baseUrl}/games/${game.id}/${game.file}`;
                 
                 console.log('Loading game from:', gamePath);
                 
-                // 加载游戏文件
-                currentGameInstance.load({
+                // 设置Ruffle配置，使游戏内资源也使用绝对路径
+                // 这里我们创建一个配置对象，设置base路径为游戏所在目录
+                const config = {
                     url: gamePath,
                     width: DEFAULT_WIDTH,
                     height: DEFAULT_HEIGHT,
@@ -538,11 +543,25 @@
                     // 设置Ruffle配置，使游戏内资源也使用绝对路径
                     parameters: {
                         base: `${baseUrl}/games/${game.id}/`
-                    }
-                }).catch(error => {
+                    },
+                    // 设置允许跨域请求
+                    allowScriptAccess: true,
+                    allowNetworking: "all"
+                };
+                
+                // 加载游戏文件
+                currentGameInstance.load(config).catch(error => {
                     console.error('Error loading game:', error);
                     showError('加载游戏失败，请检查游戏文件是否存在');
                 });
+                
+                // 监听Ruffle实例的ready事件，确保正确设置尺寸
+                currentGameInstance.addEventListener('loadedmetadata', function() {
+                    console.log('Ruffle实例已加载元数据');
+                    // 确保Ruffle实例尺寸正确
+                    updateGameSize();
+                });
+                
             } catch (error) {
                 console.error('Error creating Ruffle player:', error);
                 showError('创建游戏播放器失败');
@@ -591,8 +610,14 @@
                 
                 // 更新Ruffle播放器尺寸
                 if (currentGameInstance) {
+                    // 直接设置Ruffle实例的尺寸
                     currentGameInstance.style.width = `${newWidth}px`;
                     currentGameInstance.style.height = `${newHeight}px`;
+                    
+                    // 尝试调用Ruffle的内部方法重新调整大小
+                    if (currentGameInstance.resize) {
+                        currentGameInstance.resize(newWidth, newHeight);
+                    }
                 }
             }
         }
@@ -647,10 +672,10 @@
             // 创建giscus评论组件
             const script = document.createElement('script');
             script.src = "https://giscus.app/client.js";
-            script.setAttribute('data-repo', "mtdcmz/mtdcmz.github.io"); // 替换为您的仓库
-            script.setAttribute('data-repo-id', "R_kgDOJexample"); // 替换为您的仓库ID
+            script.setAttribute('data-repo', "mtdcmz/flash-games-archive"); // 替换为您的仓库
+            script.setAttribute('data-repo-id', ""); // 需要替换为实际的仓库ID
             script.setAttribute('data-category', "Comments");
-            script.setAttribute('data-category-id', "DIC_kwDOJexample"); // 替换为您的分类ID
+            script.setAttribute('data-category-id', ""); // 需要替换为实际的分类ID
             script.setAttribute('data-mapping', "specific");
             script.setAttribute('data-term', gameId);
             script.setAttribute('data-reactions-enabled', "1");
