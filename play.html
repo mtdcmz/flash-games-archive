@@ -156,7 +156,6 @@
             align-items: center;
             margin-bottom: 1rem;
             position: relative;
-            overflow: auto;
         }
         
         #game-player-wrapper {
@@ -167,8 +166,8 @@
             background-color: #000;
             overflow: hidden;
             max-width: 100%;
-            transform-origin: center center;
-            transition: transform 0.3s ease;
+            width: 800px;
+            height: 600px;
         }
         
         #game-player {
@@ -485,10 +484,11 @@
         // 全局变量
         let currentGameInstance = null;
         let currentGameData = null;
+        let gameOriginalWidth = 800;
+        let gameOriginalHeight = 600;
         let currentScale = 1;
-        const scaleStep = 0.25;
-        const minScale = 0.5;
-        const maxScale = 2;
+        const scaleSteps = [0.5, 0.75, 1, 1.25, 1.5, 2];
+        let currentScaleIndex = 2; // 默认100%缩放
         
         window.RufflePlayer = window.RufflePlayer || {};
         window.RufflePlayer.config = {
@@ -578,7 +578,7 @@
                     </div>
                     <div class="game-controls">
                         <button class="control-btn" id="zoom-out">缩小</button>
-                        <button class="control-btn" id="zoom-reset">重置</button>
+                        <button class="control-btn" id="reset-zoom">重置缩放</button>
                         <button class="control-btn" id="zoom-in">放大</button>
                         <button class="control-btn" id="fullscreen">全屏</button>
                         <button class="control-btn" id="replay">重玩</button>
@@ -631,43 +631,16 @@
         }
         
         function setupControls() {
-            document.getElementById('zoom-in').addEventListener('click', zoomIn);
-            document.getElementById('zoom-out').addEventListener('click', zoomOut);
-            document.getElementById('zoom-reset').addEventListener('click', zoomReset);
             document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
             document.getElementById('replay').addEventListener('click', replayGame);
-        }
-        
-        function zoomIn() {
-            if (currentScale < maxScale) {
-                currentScale = Math.min(currentScale + scaleStep, maxScale);
-                applyZoom();
-            }
-        }
-        
-        function zoomOut() {
-            if (currentScale > minScale) {
-                currentScale = Math.max(currentScale - scaleStep, minScale);
-                applyZoom();
-            }
-        }
-        
-        function zoomReset() {
-            currentScale = 1;
-            applyZoom();
-        }
-        
-        function applyZoom() {
-            const wrapper = document.getElementById('game-player-wrapper');
-            if (wrapper) {
-                wrapper.style.transform = `scale(${currentScale})`;
-            }
+            document.getElementById('zoom-in').addEventListener('click', zoomIn);
+            document.getElementById('zoom-out').addEventListener('click', zoomOut);
+            document.getElementById('reset-zoom').addEventListener('click', resetZoom);
         }
         
         // 重玩游戏
         function replayGame() {
             if (currentGameData) {
-                currentScale = 1;
                 loadGame(currentGameData);
             }
         }
@@ -701,13 +674,25 @@
                     console.log('Game loaded successfully');
                     console.log('Game base path set to:', gameBaseUrl);
                     
+                    // 获取游戏原始尺寸并设置缩放
+                    if (currentGameInstance.movieWidth && currentGameInstance.movieHeight) {
+                        gameOriginalWidth = currentGameInstance.movieWidth;
+                        gameOriginalHeight = currentGameInstance.movieHeight;
+                        console.log(`Game original size: ${gameOriginalWidth}x${gameOriginalHeight}`);
+                    }
+                    
+                    // 设置Ruffle缩放配置
+                    if (currentGameInstance.config) {
+                        currentGameInstance.config.scale = 'showAll';
+                        currentGameInstance.config.align = 'center';
+                    }
+                    
+                    // 应用初始缩放
+                    applyScale();
+                    
                     if (loadingElement) {
                         loadingElement.style.display = 'none';
                     }
-                    
-                    setTimeout(() => {
-                        adjustGameSize();
-                    }, 500);
                     
                 }).catch(error => {
                     console.error('Error loading game:', error);
@@ -727,33 +712,44 @@
             }
         }
         
-        function adjustGameSize() {
-            if (!currentGameInstance) return;
-            
-            try {
-                const wrapper = document.getElementById('game-player-wrapper');
-                const metadata = currentGameInstance.metadata;
-                
-                if (metadata && metadata.width && metadata.height) {
-                    const gameWidth = metadata.width;
-                    const gameHeight = metadata.height;
-                    
-                    console.log('Game dimensions:', gameWidth, 'x', gameHeight);
-                    
-                    wrapper.style.width = gameWidth + 'px';
-                    wrapper.style.height = gameHeight + 'px';
-                } else {
-                    // 如果无法获取游戏尺寸，使用默认尺寸
-                    console.log('Using default dimensions: 800x600');
-                    wrapper.style.width = '800px';
-                    wrapper.style.height = '600px';
-                }
-                
-                // 应用当前缩放
-                applyZoom();
-            } catch (error) {
-                console.error('Error adjusting game size:', error);
+        // 缩放功能
+        function zoomIn() {
+            if (currentScaleIndex < scaleSteps.length - 1) {
+                currentScaleIndex++;
+                applyScale();
             }
+        }
+        
+        function zoomOut() {
+            if (currentScaleIndex > 0) {
+                currentScaleIndex--;
+                applyScale();
+            }
+        }
+        
+        function resetZoom() {
+            currentScaleIndex = 2; // 重置为100%
+            applyScale();
+        }
+        
+        function applyScale() {
+            const wrapper = document.getElementById('game-player-wrapper');
+            currentScale = scaleSteps[currentScaleIndex];
+            
+            // 根据游戏原始尺寸和当前缩放比例设置容器大小
+            const scaledWidth = gameOriginalWidth * currentScale;
+            const scaledHeight = gameOriginalHeight * currentScale;
+            
+            wrapper.style.width = `${scaledWidth}px`;
+            wrapper.style.height = `${scaledHeight}px`;
+            
+            // 更新Ruffle实例的尺寸
+            if (currentGameInstance && currentGameInstance.style) {
+                currentGameInstance.style.width = '100%';
+                currentGameInstance.style.height = '100%';
+            }
+            
+            console.log(`Applied scale: ${currentScale}, container size: ${scaledWidth}x${scaledHeight}`);
         }
         
         function toggleFullscreen() {
