@@ -175,6 +175,32 @@
             display: block;
         }
         
+        /* Ruffle加载动画样式 */
+        .ruffle-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            color: white;
+            z-index: 10;
+        }
+        
+        .ruffle-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+        
         .game-controls {
             display: flex;
             justify-content: center;
@@ -435,6 +461,10 @@
                     <div class="game-container">
                         <div id="game-player-wrapper" style="width: ${DEFAULT_WIDTH}px; height: ${DEFAULT_HEIGHT}px;">
                             <div id="game-player"></div>
+                            <div id="ruffle-loading" class="ruffle-loading">
+                                <div class="ruffle-spinner"></div>
+                                <div>加载中...</div>
+                            </div>
                         </div>
                     </div>
                     <div class="game-controls">
@@ -530,11 +560,12 @@
                 // 构建绝对路径 - 确保路径指向游戏所在目录
                 const baseUrl = getBaseUrl();
                 const gamePath = `${baseUrl}/games/${game.id}/${game.file}`;
+                const gameBaseUrl = `${baseUrl}/games/${game.id}/`;
                 
                 console.log('Loading game from:', gamePath);
+                console.log('Game base URL:', gameBaseUrl);
                 
                 // 设置Ruffle配置，使游戏内资源也使用绝对路径
-                // 这里我们创建一个配置对象，设置base路径为游戏所在目录
                 const config = {
                     url: gamePath,
                     width: DEFAULT_WIDTH,
@@ -542,16 +573,33 @@
                     backgroundColor: '#000000',
                     // 设置Ruffle配置，使游戏内资源也使用绝对路径
                     parameters: {
-                        base: `${baseUrl}/games/${game.id}/`
+                        base: gameBaseUrl,
+                        movie: gamePath
                     },
                     // 设置允许跨域请求
                     allowScriptAccess: true,
                     allowNetworking: "all"
                 };
                 
+                // 显示Ruffle加载动画
+                const loadingElement = document.getElementById('ruffle-loading');
+                if (loadingElement) {
+                    loadingElement.style.display = 'flex';
+                }
+                
                 // 加载游戏文件
-                currentGameInstance.load(config).catch(error => {
+                currentGameInstance.load(config).then(() => {
+                    console.log('Game loaded successfully');
+                    // 隐藏加载动画
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
+                }).catch(error => {
                     console.error('Error loading game:', error);
+                    // 隐藏加载动画
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
                     showError('加载游戏失败，请检查游戏文件是否存在');
                 });
                 
@@ -564,6 +612,11 @@
                 
             } catch (error) {
                 console.error('Error creating Ruffle player:', error);
+                // 隐藏加载动画
+                const loadingElement = document.getElementById('ruffle-loading');
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
                 showError('创建游戏播放器失败');
             }
         }
