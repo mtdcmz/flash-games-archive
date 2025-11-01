@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<ver>1.0.0000.2.1</ver>
+	
+	<!-- 技能开启等级 -->
+	<skillLevel run="1" evenJump="1" upAttack="1" runAttack="1" skill1_1="1" skill1_2="1" skill2_1="5" skill2_2="15" skill2_3="35" />
+	<!-- 技能耗MP值 -->
+	<skillMp run="0" evenJump="0" upAttack="0" runAttack="0" skill1_1="10" skill1_2="20" skill2_1="30" skill2_2="40" skill2_3="50" />
+	<!--技能名称-->
+	<skillName>
+		<item id="Gaia" skill1 ="雷光射线" skill2 ="雷光踢" skill3="雷鸣绝杀"/>
+		<item id="Reina" skill1="雷光气波" skill2="雷光拳" skill3="烈焰断空"/>
+	</skillName>	
+	<!-- 攻击伤害百分比 -->
+	<attackPower>	
+		<item id="Gaia" att1="100" att2="120" att3="130" att4="150" jumpAttack="200" upAttack="300" runAttack="240" skill1_1="0" skill1_2="200" skill2_1="330" skill2_2="500" skill2_3="800" />
+		<item id="Reina" att1="100" att2="120" att3="130" att4="150" jumpAttack="200" upAttack="300" runAttack="240" skill1_1="0" skill1_2="300" skill2_1="500" skill2_2="750" skill2_3="1200" />
+		<item id="AgouRu" att1="100" att2="120" att3="130" att4="150" jumpAttack="100" upAttack="100" runAttack="105" skill1_1="130" skill1_2="0" skill2_1="300" skill2_2="750" skill2_3="1200" />
+		<item id="SaltedEgg" att1="100" att2="120" att3="130" att4="150" jumpAttack="100" upAttack="100" runAttack="105" skill1_1="130" skill1_2="0" skill2_1="300" skill2_2="750" skill2_3="1200" />
+		<item id="Zero" att1="100" att2="120" att3="130" att4="150" jumpAttack="100" upAttack="100" runAttack="105" skill1_1="130" skill1_2="0" skill2_1="300" skill2_2="750" skill2_3="1200" />
+	</attackPower>	
+	<!-- 装备 -->
+	<equip>	
+		<!-- 头盔 -->
+		<item type="h1" name="初级头盔" hp="100" mp="0" att="0" def="100" money="380" />
+		<item type="h2" name="中级头盔" hp="300" mp="100" att="0" def="400" money="580" />
+		<item type="h3" name="高级头盔" hp="500" mp="300" att="0" def="800" money="980" />
+		<!-- 铠甲 -->
+		<item type="d1" name="初级铠甲" hp="100" mp="100" att="0" def="500" money="180" />
+		<item type="d2" name="中级铠甲" hp="300" mp="300" att="0" def="800" money="580" />
+		<item type="d3" name="高级铠甲" hp="500" mp="500" att="0" def="1000" money="1080" />
+		<!-- 项链 -->
+		<item type="e1" name="初级项链" hp="100" mp="100" att="0" def="0" money="80" />
+		<item type="e2" name="中级项链" hp="300" mp="500" att="0" def="0" money="180" />
+		<item type="e3" name="高级项链" hp="500" mp="900" att="0" def="0" money="380" />
+		<!-- 拳套 -->
+		<item type="c1" name="初级拳套" hp="100" mp="100" att="100" def="100" money="280" />
+		<item type="c2" name="中级拳套" hp="300" mp="400" att="500" def="300" money="480" />
+		<item type="c3" name="高级拳套" hp="500" mp="800" att="800" def="500" money="680" />
+	</equip>
+	<!-- 物品参数 除exp其余为百分比 -->
+	<goods>
+		<item id="g0" name="馒头" hp="20" mp="0" att="0" def="0" exp="10" src="1级补血药,回20%HP,花费10点EXP值!" />
+		<item id="g1" name="肉包" hp="50" mp="0" att="0" def="0" exp="35" src="2级补血药,回50%HP,花费35点EXP值!"  />
+		<item id="g2" name="月饼" hp="100" mp="0" att="0" def="0" exp="100" src="3级补血药,回100%HP,花费100点EXP值!"  />
+		<item id="g3" name="白粥" hp="0" mp="20" att="0" def="0" exp="15" src="1级补蓝药水,回20%MP,花费10点EXP值!" />
+		<item id="g4" name="米饭" hp="0" mp="50" att="0" def="0" exp="50" src="2级补蓝药水,回50%MP,花费35点EXP值!"  />
+		<item id="g5" name="八宝粥" hp="0" mp="100" att="0" def="0" exp="150" src="3级补蓝药水,回100%MP,花费100点EXP值!" />
+	</goods>
+	<!-- 咸蛋参数 -->
+	<role>
+		<item id="Gaia" level="1" hp="200" mp="180" att="30" def="20" exp="0" score="0" money="180" />
+		<item id="Reina" level="1" hp="200" mp="180" att="30" def="20" exp="0" score="0" money="180" />
+		<item id="AgouRu" level="1" hp="200" mp="180" att="30" def="20" exp="0" score="0" money="180" />
+		<item id="SaltedEgg" level="1" hp="200" mp="180" att="30" def="20" exp="0" score="0" money="180" />
+		<item id="Zero" level="1" hp="200" mp="180" att="30" def="20" exp="0" score="0" money="180" />
+	</role>
+
+	<!-- 成长值 基础值表-->
+	<grow>	
+		<item id="Gaia" hp="20" mp="18" att="3" def="2" exp="40" />
+		<item id="Reina" hp="20" mp="18" att="3" def="2" exp="40" />
+		<item id="AgouRu" hp="20" mp="18" att="3" def="2" exp="40" />
+		<item id="SaltedEgg" hp="20" mp="18" att="3" def="2" exp="40" />
+		<item id="Zero" hp="20" mp="18" att="3" def="2" exp="40" />	
+	</grow>
+	<!-- 角色基础值	成长值	系数 满级 -->
+	<roleCoeff lvExp="100" upExp="100" lvCoeff="105" lvMax="100" />
+	<!-- 装备基础值	成长值	系数 满级 -->
+	<equipCoeff lvExp="10" upExp="10" lvCoeff="105" lvMax="100" />
+	<!-- 成长加成百分比 比重值表-->
+	<growRate>	
+		<item id="Gaia" hp="60" mp="60" att="60" def="60" />
+		<item id="Reina" hp="45" mp="90" att="55" def="50" />
+		<item id="AgouRu" hp="60" mp="60" att="60" def="60" />
+		<item id="SaltedEgg" hp="60" mp="60" att="60" def="60" />
+		<item id="Zero" hp="60" mp="60" att="60" def="60" />
+		<item id="h1" hp="40" mp="0" att="0" def="0" />
+		<item id="d1" hp="0" mp="0" att="0" def="40" />
+		<item id="e1" hp="0" mp="40" att="0" def="0" />
+		<item id="c1" hp="0" mp="0" att="40" def="0" />
+	</growRate>	
+	<!-- 敌人参数 -->
+	<enemys>
+		<!-- 小怪24 -->
+		<item id="s1" hp="200" att="25" def="10" speedX="1.5" exp="40" score="100" money="80" searchX="450" escapeX="500" hitFly="1" isFly="0" />
+		<item id="s2" hp="240" att="31" def="12" speedX="2" exp="54" score="100" money="80" searchX="450" escapeX="500" hitFly="1" isFly="0" />
+		<item id="s3" hp="280" att="37" def="14" speedX="1.5" exp="69" score="100" money="80" searchX="650" escapeX="800" hitFly="1" isFly="0" />
+		<item id="s4" hp="600" att="50" def="20" speedX="4" exp="117" score="100" money="80" searchX="600" escapeX="800" hitFly="1" isFly="0" />
+		<item id="s5" hp="660" att="56" def="22" speedX="2" exp="132" score="300" money="280" searchX="600" escapeX="800" hitFly="0" isFly="0" />
+		<item id="s6" hp="720" att="62" def="24" speedX="5" exp="147" score="300" money="280" searchX="700" escapeX="800" hitFly="1" isFly="0" />
+		<item id="s7" hp="1200" att="75" def="30" speedX="3" exp="195" score="300" money="280" searchX="650" escapeX="800" hitFly="1" isFly="0" />
+		<item id="s8" hp="1280" att="81" def="32" speedX="2" exp="210" score="300" money="280" searchX="650" escapeX="800" hitFly="1" isFly="0" />
+		<item id="s9" hp="1360" att="87" def="34" speedX="4" exp="216" score="300" money="280" searchX="750" escapeX="800" hitFly="1" isFly="0" />
+		<item id="s10" hp="2000" att="120" def="40" speedX="3" exp="273" score="300" money="280" searchX="650" escapeX="800" hitFly="1" isFly="0" />
+		<item id="s11" hp="2100" att="126" def="42" speedX="2.5" exp="288" score="500" money="680" searchX="750" escapeX="800" hitFly="1" isFly="0" />
+		<item id="s12" hp="2200" att="132" def="44" speedX="3.5" exp="303" score="500" money="680" searchX="850" escapeX="800" hitFly="1" isFly="0" />
+		<item id="s13" hp="2500" att="150" def="50" speedX="3" exp="351" score="500" money="680" searchX="650" escapeX="800" hitFly="1" isFly="0" />
+		<item id="s14" hp="2600" att="156" def="52" speedX="3.5" exp="366" score="500" money="680" searchX="750" escapeX="800" hitFly="1" isFly="0" />
+		<item id="s15" hp="2700" att="162" def="54" speedX="2" exp="411" score="500" money="680" searchX="900" escapeX="850" hitFly="0" isFly="0" />
+		<item id="s16" hp="3000" att="180" def="60" speedX="3" exp="429" score="800" money="880" searchX="750" escapeX="850" hitFly="1" isFly="0" />
+		<item id="s17" hp="3100" att="186" def="62" speedX="3" exp="444" score="800" money="880" searchX="800" escapeX="850" hitFly="1" isFly="0" />
+		<item id="s18" hp="3200" att="192" def="64" speedX="4" exp="459" score="800" money="880" searchX="900" escapeX="850" hitFly="1" isFly="0" />
+		<item id="s19" hp="3500" att="210" def="70" speedX="5" exp="507" score="800" money="880" searchX="750" escapeX="900" hitFly="1" isFly="0" />
+		<item id="s20" hp="3600" att="216" def="72" speedX="4.5" exp="522" score="800" money="880" searchX="800" escapeX="900" hitFly="1" isFly="0" />
+		<item id="s21" hp="3700" att="222" def="74" speedX="3" exp="537" score="1800" money="1880" searchX="950" escapeX="900" hitFly="1" isFly="0" />
+		<item id="s22" hp="4000" att="240" def="80" speedX="4" exp="585" score="1800" money="1880" searchX="850" escapeX="950" hitFly="1" isFly="0" />
+		<item id="s23" hp="4100" att="246" def="82" speedX="5" exp="600" score="1800" money="1880" searchX="850" escapeX="950" hitFly="1" isFly="0" />
+		<item id="s24" hp="4200" att="252" def="84" speedX="4" exp="615" score="1800" money="1880" searchX="900" escapeX="950" hitFly="1" isFly="0" />
+		<!-- 精英怪16 -->
+		<item id="e1" hp="960" att="43" def="16" speedX="3" exp="114" score="500" money="680" searchX="650" escapeX="700" hitFly="1" isFly="0" />
+		<item id="e2" hp="1080" att="49" def="18" speedX="2" exp="136" score="500" money="680" searchX="650" escapeX="700" hitFly="1" isFly="0" />
+		<item id="e3" hp="2340" att="68" def="26" speedX="2.5" exp="218" score="500" money="680" searchX="700" escapeX="800" hitFly="0" isFly="0" />
+		<item id="e4" hp="2520" att="74" def="28" speedX="4" exp="240" score="500" money="680" searchX="700" escapeX="800" hitFly="1" isFly="0" />
+		<item id="e5" hp="4320" att="93" def="36" speedX="4" exp="322" score="500" money="680" searchX="700" escapeX="850" hitFly="1" isFly="0" />
+		<item id="e6" hp="4560" att="99" def="38" speedX="2" exp="344" score="1800" money="1880" searchX="750" escapeX="850" hitFly="0" isFly="0" />
+		<item id="e7" hp="6900" att="138" def="46" speedX="4" exp="406" score="1800" money="1880" searchX="750" escapeX="850" hitFly="1" isFly="0" />
+		<item id="e8" hp="7200" att="144" def="48" speedX="5" exp="448" score="1800" money="1880" searchX="750" escapeX="900" hitFly="0" isFly="0" />
+		<item id="e9" hp="8400" att="168" def="56" speedX="4" exp="530" score="1800" money="1880" searchX="750" escapeX="900" hitFly="1" isFly="0" />
+		<item id="e10" hp="8700" att="174" def="58" speedX="5" exp="552" score="1800" money="1880" searchX="800" escapeX="900" hitFly="1" isFly="0" />
+		<item id="e11" hp="9900" att="198" def="66" speedX="5" exp="634" score="1800" money="1880" searchX="800" escapeX="900" hitFly="1" isFly="0" />
+		<item id="e12" hp="10200" att="204" def="68" speedX="3" exp="656" score="1800" money="1880" searchX="800" escapeX="950" hitFly="0" isFly="0" />
+		<item id="e13" hp="11400" att="228" def="76" speedX="3" exp="738" score="1800" money="1880" searchX="800" escapeX="950" hitFly="1" isFly="0" />
+		<item id="e14" hp="11700" att="234" def="78" speedX="5" exp="760" score="1800" money="1880" searchX="850" escapeX="950" hitFly="1" isFly="0" />
+		<item id="e15" hp="12900" att="258" def="86" speedX="5" exp="842" score="1800" money="1880" searchX="850" escapeX="950" hitFly="1" isFly="0" />
+		<item id="e16" hp="13200" att="264" def="88" speedX="5" exp="864" score="1800" money="1880" searchX="850" escapeX="950" hitFly="1" isFly="0" />
+		<!-- Boss怪8 -->
+		<item id="b1" hp="5700" att="47" def="19" speedX="4" exp="364" score="1800" money="1880" searchX="700" escapeX="800" hitFly="1" isFly="0" />
+		<item id="b2" hp="13050" att="77" def="29" speedX="3" exp="624" score="1800" money="1880" searchX="800" escapeX="1000" hitFly="0" isFly="0" />
+		<item id="b3" hp="23400" att="102" def="39" speedX="3" exp="884" score="1800" money="1880" searchX="900" escapeX="1000" hitFly="0" isFly="0" />
+		<item id="b4" hp="36750" att="147" def="49" speedX="5" exp="1144" score="1800" money="1880" searchX="900" escapeX="1200" hitFly="1" isFly="0" />
+		<item id="b5" hp="44250" att="177" def="59" speedX="5" exp="1404" score="1800" money="1880" searchX="1000" escapeX="1200" hitFly="1" isFly="0" />
+		<item id="b6" hp="51750" att="207" def="69" speedX="4" exp="1664" score="1800" money="1880" searchX="1000" escapeX="1500" hitFly="0" isFly="0" />
+		<item id="b7" hp="59250" att="237" def="79" speedX="4" exp="1924" score="1800" money="1880" searchX="1200" escapeX="1500" hitFly="1" isFly="0" />
+		<item id="b8" hp="66750" att="267" def="89" speedX="0" exp="2184" score="1800" money="1880" searchX="1200" escapeX="1500" hitFly="0" isFly="0" />
+	</enemys>
+	<!-- 关卡信息 -->
+	<levels>
+		<item mapName="新原城" bgMusic="music_1" mapRes="Lv_1" enemyRes="Enemy_1" bossName="b1">
+			<waves>
+			<!-- 刷怪点X,Y,锁屏X,Y,间隔,数量,难度系数,敌人名称 -->
+				<w>  60,0,1280,0, 50,3,0,s1:s2</w>
+				<w> 400,0,   0,0, 50,2,0,s2:s3</w>
+				<w> 800,0,   0,0, 50,2,0,s1:s3</w>
+				<w>1200,0,2420,0, 50,2,0,s1:s2:e1</w>
+				<w>1600,0,   0,0, 50,2,0,s2:s3</w>
+				<w>2000,0,   0,0, 50,2,0,s1:s3</w>
+				<w>2400,0,3620,0, 50,2,0,s1:s2:e2</w>
+				<w>2800,0,   0,0, 50,3,0,s1:s2:s3</w>
+				<w>3200,0,   0,0,250,1,0,e1:e2</w>
+				<w>3600,0,4700,0,150,1,0,b1</w>
+			</waves>
+		</item>
+		<item mapName="雷奥路口" bgMusic="music_2" mapRes="Lv_2" enemyRes="Enemy_2" bossName="b2">
+			<waves>
+				<w>  60,0,1280,0, 50,3,0,s4:s5</w>
+				<w> 400,0,   0,0, 50,2,0,s5:s6</w>
+				<w> 800,0,   0,0, 50,2,0,s4:s6</w>
+				<w>1200,0,2420,0, 50,2,0,s4:s5:e3</w>
+				<w>1600,0,   0,0, 50,2,0,s5:s6</w>
+				<w>2000,0,   0,0, 50,3,0,s4:s6</w>
+				<w>2400,0,3620,0, 50,2,0,s4:s5:e4</w>
+				<w>2800,0,   0,0, 50,3,0,s4:s5:s6</w>
+				<w>3200,0,   0,0,250,1,0,e3:e4</w>
+				<w>3600,0,4700,0,150,1,0,b2</w>
+			</waves>
+		</item>
+		<item mapName="裂天峡谷" bgMusic="music_3" mapRes="Lv_3" enemyRes="Enemy_3" bossName="b3">
+			<waves>
+				<w>  60,0,1280,0, 50,3,0,s7:s8</w>
+				<w> 400,0,   0,0, 50,2,0,s8:s9</w>
+				<w> 800,0,   0,0, 50,2,0,s7:s9</w>
+				<w>1200,0,2420,0, 50,2,0,s7:s8:e5</w>
+				<w>1600,0,   0,0, 50,3,0,s8:s9</w>
+				<w>2000,0,   0,0, 50,3,0,s7:s9</w>
+				<w>2400,0,3620,0, 50,2,0,s7:s8:e6</w>
+				<w>2800,0,   0,0, 50,3,0,s7:s8:s9</w>
+				<w>3200,0,   0,0,250,1,0,e5:e6</w>
+				<w>3600,0,4700,0,150,1,0,b3</w>
+			</waves>
+		</item>
+		<item mapName="熔岩之息" bgMusic="music_4" mapRes="Lv_4" enemyRes="Enemy_4" bossName="b4">
+			<waves>
+				<w>  60,0,1280,0, 50,3,0,s10:s11</w>
+				<w> 400,0,   0,0, 50,2,0,s11:s12</w>
+				<w> 800,0,   0,0, 50,3,0,s10:s12</w>
+				<w>1200,0,2420,0, 50,2,0,s10:s11:e7</w>
+				<w>1600,0,   0,0, 50,3,0,s11:s12</w>
+				<w>2000,0,   0,0, 50,3,0,s10:s12</w>
+				<w>2400,0,3620,0, 50,2,0,s10:s11:e8</w>
+				<w>2800,0,   0,0, 50,3,0,s10:s11:s12</w>
+				<w>3200,0,   0,0,250,1,0,e7:e8</w>
+				<w>3600,0,4700,0,150,1,0,b4</w>
+			</waves>
+		</item>
+		<item mapName="悲叹沼泽" bgMusic="music_2" mapRes="Lv_5" enemyRes="Enemy_5" bossName="b5">
+			<waves>
+				<w>  60,0,1280,0, 50,3,0,s13:s14</w>
+				<w> 400,0,   0,0, 50,3,0,s14:s15</w>
+				<w> 800,0,   0,0, 50,3,0,s13:s15</w>
+				<w>1200,0,2420,0, 50,2,0,s13:s14:e9</w>
+				<w>1600,0,   0,0, 50,3,0,s14:s15</w>
+				<w>2000,0,   0,0, 50,3,0,s13:s15</w>
+				<w>2400,0,3620,0, 50,2,0,s13:s14:e10</w>
+				<w>2800,0,   0,0, 50,4,0,s13:s14:s15</w>
+				<w>3200,0,   0,0,250,1,0,e9:e10</w>
+				<w>3600,0,4700,0,150,1,0,b5</w>
+			</waves>
+		</item>
+		<item mapName="斯特伦雪域" bgMusic="music_3" mapRes="Lv_6" enemyRes="Enemy_6" bossName="b6">
+			<waves>
+				<w>  60,0,1280,0, 50,3,0,s16:s17</w>
+				<w> 400,0,   0,0, 50,3,0,s17:s18</w>
+				<w> 800,0,   0,0, 50,3,0,s16:s18</w>
+				<w>1200,0,2420,0, 50,2,0,s16:s17:e11</w>
+				<w>1600,0,   0,0, 50,3,0,s17:s18</w>
+				<w>2000,0,   0,0, 50,4,0,s16:s18</w>
+				<w>2400,0,3620,0, 50,2,0,s16:s17:e12</w>
+				<w>2800,0,   0,0, 50,4,0,s16:s17:s18</w>
+				<w>3200,0,   0,0,250,1,0,e11:e12</w>
+				<w>3600,0,4700,0,150,1,0,b6</w>
+			</waves>
+		</item>
+		<item mapName="艾拉西亚神殿" bgMusic="music_1" mapRes="Lv_7" enemyRes="Enemy_7" bossName="b7">
+			<waves>
+				<w>  60,0,1280,0, 50,3,0,s19:s20</w>
+				<w> 400,0,   0,0, 50,3,0,s20:s21</w>
+				<w> 800,0,   0,0, 50,3,0,s19:s21</w>
+				<w>1200,0,2420,0, 50,2,0,s19:s20:e13</w>
+				<w>1600,0,   0,0, 50,4,0,s20:s21</w>
+				<w>2000,0,   0,0, 50,4,0,s19:s21</w>
+				<w>2400,0,3620,0, 50,2,0,s19:s20:e14</w>
+				<w>2800,0,   0,0, 50,4,0,s19:s20:s21</w>
+				<w>3200,0,   0,0,250,1,0,e13,e14</w>
+				<w>3600,0,4700,0,150,1,0,b7</w>
+			</waves>
+		</item>
+		<item mapName="时空裂缝" bgMusic="music_4" mapRes="Lv_8" enemyRes="Enemy_8" bossName="b8">
+			<waves>
+				<w>  60,0,1280,0, 50,3,0,s22:s23</w>
+				<w> 400,0,   0,0, 50,3,0,s23:s24</w>
+				<w> 800,0,   0,0, 50,4,0,s22:s24</w>
+				<w>1200,0,2420,0, 50,2,0,s22:s23:e15</w>
+				<w>1600,0,   0,0, 50,4,0,s23:s24</w>
+				<w>2000,0,   0,0, 50,4,0,s22:s24</w>
+				<w>2400,0,3620,0, 50,2,0,s22:s23:e16</w>
+				<w>2800,0,   0,0, 50,4,0,s22:s23:s24</w>
+				<w>3200,0,   0,0,250,1,0,e15:e16</w>
+				<w>3600,0,4700,0,150,1,0,b8</w>
+			</waves>
+		</item>
+	</levels>
+</root>

@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏页面 - MTDCMZ's Flash Games Archive</title>
+    <link rel="icon" type="image/jpeg" href="favicon.jpg">
+    <script src="https://unpkg.com/ruffle@latest/dist/ruffle.js"></script>
+    <style>
+        /* 基础样式和重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            overflow-x: hidden;
+        }
+        
+        /* 禁止图片拖拽 */
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+        }
+        
+        /* 紫色主题样式 */
+        :root {
+            --primary-color: #6a1b9a;
+            --primary-light: #9c4dcc;
+            --primary-dark: #38006b;
+            --accent-color: #e1bee7;
+            --text-light: #ffffff;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 导航栏样式 */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: var(--text-light);
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: url('images/icon.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link img {
+            width: 20px;
+            height: 20px;
+        }
+        
+        /* 将GitHub图标设为白色 */
+        .github-icon {
+            filter: brightness(0) invert(1);
+        }
+        
+        /* 主内容区域 */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .page-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--primary-dark);
+        }
+        
+        /* 游戏区域 */
+        .game-area {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+        
+        .game-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: var(--primary-dark);
+            text-align: center;
+        }
+        
+        .game-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        #game-player {
+            width: 800px;
+            height: 600px;
+            max-width: 100%;
+            border: 2px solid var(--primary-light);
+            border-radius: 4px;
+            background-color: #000;
+        }
+        
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 0.7rem 1.5rem;
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .control-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        /* 游戏描述 */
+        .game-description {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+        
+        .desc-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: var(--primary-dark);
+        }
+        
+        /* 评论区 */
+        .comments-section {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .comments-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: var(--primary-dark);
+        }
+        
+        /* 错误信息样式 */
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+            color: #d32f2f;
+            background-color: #ffebee;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        
+        .error-message button {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-links {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            #game-player {
+                height: 400px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .navbar {
+                padding: 1rem;
+            }
+            
+            .nav-links {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            #game-player {
+                height: 300px;
+            }
+            
+            .game-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-btn {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <div class="logo-icon"></div>
+                <span>MTDCMZ's Flash Games Archive</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">
+                    <span>主页</span>
+                </a>
+                <a href="https://space.bilibili.com/426046208" target="_blank" class="nav-link">
+                    <img src="https://ts2.cn.mm.bing.net/th?id=ODLS.e42d2c4d-ad65-4c7a-b0fd-817a1c3bed01" alt="Bilibili">
+                    <span>Bilibili</span>
+                </a>
+                <a href="https://github.com/mtdcmz" target="_blank" class="nav-link">
+                    <img src="https://github.githubassets.com/assets/pinned-octocat-093da3e6fa40.svg" alt="GitHub" class="github-icon">
+                    <span>GitHub</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 主内容区域 -->
+    <div class="container">
+        <div id="game-content">
+            <!-- 游戏内容将通过JS动态生成 -->
+            <div class="loader">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 禁止右键菜单和文本选择
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+        
+        document.addEventListener('selectstart', function(e) {
+            e.preventDefault();
+        });
+        
+        // 加载游戏数据
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取URL参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const gameId = urlParams.get('id');
+            
+            if (!gameId) {
+                showError('缺少游戏ID参数');
+                return;
+            }
+            
+            loadGameData(gameId);
+        });
+        
+        // 加载游戏数据
+        function loadGameData(gameId) {
+            fetch('details.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const game = data.find(g => g.id === gameId);
+                    if (game) {
+                        renderGame(game);
+                    } else {
+                        showError('找不到指定的游戏');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading game:', error);
+                    showError('加载游戏数据失败');
+                });
+        }
+        
+        // 渲染游戏页面
+        function renderGame(game) {
+            const container = document.getElementById('game-content');
+            const gamePath = `games/${game.id}/${game.file}`;
+            
+            container.innerHTML = `
+                <div class="game-area">
+                    <h1 class="game-title">${game.name}</h1>
+                    <div class="game-container">
+                        <div id="game-player"></div>
+                    </div>
+                    <div class="game-controls">
+                        <button class="control-btn" id="zoom-in">放大</button>
+                        <button class="control-btn" id="zoom-out">缩小</button>
+                        <button class="control-btn" id="fullscreen">全屏</button>
+                    </div>
+                </div>
+                <div class="game-description">
+                    <h2 class="desc-title">游戏简介</h2>
+                    <p>${game.desc}</p>
+                </div>
+                <div class="comments-section">
+                    <h2 class="comments-title">评论</h2>
+                    <div id="giscus-comments"></div>
+                </div>
+            `;
+            
+            // 加载游戏
+            loadGame(gamePath);
+            
+            // 设置控制按钮事件
+            document.getElementById('zoom-in').addEventListener('click', zoomIn);
+            document.getElementById('zoom-out').addEventListener('click', zoomOut);
+            document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
+            
+            // 加载评论
+            loadComments(game.id);
+        }
+        
+        // 加载游戏
+        function loadGame(gamePath) {
+            const player = document.getElementById('game-player');
+            player.innerHTML = '';
+            
+            // 使用Ruffle加载游戏
+            const ruffle = window.RufflePlayer.newest();
+            const playerInstance = ruffle.createPlayer();
+            player.appendChild(playerInstance);
+            
+            playerInstance.load({
+                url: gamePath,
+                width: player.offsetWidth,
+                height: player.offsetHeight
+            }).catch(error => {
+                console.error('Error loading game:', error);
+                showError('加载游戏失败');
+            });
+        }
+        
+        // 放大游戏
+        function zoomIn() {
+            const player = document.getElementById('game-player');
+            const currentWidth = player.offsetWidth;
+            const currentHeight = player.offsetHeight;
+            
+            if (currentWidth < 1200) {
+                player.style.width = (currentWidth + 100) + 'px';
+                player.style.height = (currentHeight + 75) + 'px';
+            }
+        }
+        
+        // 缩小游戏
+        function zoomOut() {
+            const player = document.getElementById('game-player');
+            const currentWidth = player.offsetWidth;
+            const currentHeight = player.offsetHeight;
+            
+            if (currentWidth > 400) {
+                player.style.width = (currentWidth - 100) + 'px';
+                player.style.height = (currentHeight - 75) + 'px';
+            }
+        }
+        
+        // 切换全屏
+        function toggleFullscreen() {
+            const player = document.getElementById('game-player');
+            
+            if (!document.fullscreenElement) {
+                if (player.requestFullscreen) {
+                    player.requestFullscreen();
+                } else if (player.webkitRequestFullscreen) {
+                    player.webkitRequestFullscreen();
+                } else if (player.msRequestFullscreen) {
+                    player.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+        
+        // 加载评论
+        function loadComments(gameId) {
+            const commentsContainer = document.getElementById('giscus-comments');
+            
+            // 创建giscus评论组件
+            const script = document.createElement('script');
+            script.src = "https://giscus.app/client.js";
+            script.setAttribute('data-repo', "mtdcmz/mtdcmz.github.io"); // 替换为您的仓库
+            script.setAttribute('data-repo-id', "R_kgDOJexample"); // 替换为您的仓库ID
+            script.setAttribute('data-category', "Comments");
+            script.setAttribute('data-category-id', "DIC_kwDOJexample"); // 替换为您的分类ID
+            script.setAttribute('data-mapping', "specific");
+            script.setAttribute('data-term', gameId);
+            script.setAttribute('data-reactions-enabled', "1");
+            script.setAttribute('data-emit-metadata', "0");
+            script.setAttribute('data-input-position', "bottom");
+            script.setAttribute('data-theme', "light");
+            script.setAttribute('data-lang', "zh-CN");
+            script.setAttribute('crossorigin', "anonymous");
+            script.async = true;
+            
+            commentsContainer.appendChild(script);
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            const container = document.getElementById('game-content');
+            container.innerHTML = `
+                <div class="error-message">
+                    <h3>${message}</h3>
+                    <button onclick="window.location.href='index.html'">返回主页</button>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
