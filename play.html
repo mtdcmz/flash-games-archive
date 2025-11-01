@@ -166,7 +166,6 @@
             background-color: #000;
             overflow: hidden;
             max-width: 100%;
-            /* 移除固定宽高，由JS动态设置 */
         }
         
         #game-player {
@@ -312,8 +311,7 @@
             }
             
             #game-player-wrapper {
-                /* 平板设备上保持最大宽度限制 */
-                max-width: 90vw;
+                max-width: 100%;
             }
         }
         
@@ -364,7 +362,7 @@
             }
             
             #game-player-wrapper {
-                max-width: 95vw;
+                max-width: 100%;
                 border-width: 1px;
             }
             
@@ -480,8 +478,8 @@
         // 全局变量
         let currentGameInstance = null;
         let currentGameData = null;
-        let gameOriginalWidth = 800; // 默认值
-        let gameOriginalHeight = 600; // 默认值
+        let gameOriginalWidth = 800;
+        let gameOriginalHeight = 600;
         let currentScale = 1;
         const scaleSteps = [0.5, 0.75, 1, 1.25, 1.5, 2];
         let currentScaleIndex = 2; // 默认100%缩放
@@ -670,25 +668,11 @@
                     console.log('Game loaded successfully');
                     console.log('Game base path set to:', gameBaseUrl);
                     
-                    // 等待Ruffle获取游戏尺寸
-                    setTimeout(() => {
-                        // 获取游戏原始尺寸并设置缩放
-                        if (currentGameInstance.movieWidth && currentGameInstance.movieHeight) {
-                            gameOriginalWidth = currentGameInstance.movieWidth;
-                            gameOriginalHeight = currentGameInstance.movieHeight;
-                            console.log(`Game original size: ${gameOriginalWidth}x${gameOriginalHeight}`);
-                            
-                            // 应用初始缩放
-                            applyScale();
-                        } else {
-                            console.warn('无法获取游戏尺寸，使用默认尺寸');
-                            applyScale();
-                        }
-                        
+                    waitForGameDimensions().then(() => {
                         if (loadingElement) {
                             loadingElement.style.display = 'none';
                         }
-                    }, 100);
+                    });
                     
                 }).catch(error => {
                     console.error('Error loading game:', error);
@@ -706,6 +690,49 @@
                 }
                 showError('创建游戏播放器失败');
             }
+        }
+        
+        function waitForGameDimensions() {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 100; // 最多等待10秒
+                
+                const checkDimensions = setInterval(() => {
+                    attempts++;
+                    
+                    // 尝试获取游戏尺寸
+                    if (currentGameInstance && 
+                        currentGameInstance.metadata && 
+                        currentGameInstance.metadata.width && 
+                        currentGameInstance.metadata.height) {
+                        
+                        gameOriginalWidth = currentGameInstance.metadata.width;
+                        gameOriginalHeight = currentGameInstance.metadata.height;
+                        
+                        console.log(`Game dimensions detected: ${gameOriginalWidth}x${gameOriginalHeight}`);
+                        clearInterval(checkDimensions);
+                        
+                        // 设置Ruffle缩放配置
+                        if (currentGameInstance.config) {
+                            currentGameInstance.config.scale = 'showAll';
+                            currentGameInstance.config.align = 'center';
+                        }
+                        
+                        // 应用初始缩放
+                        applyScale();
+                        resolve();
+                        
+                    } else if (attempts >= maxAttempts) {
+                        // 超时后使用默认尺寸
+                        console.warn('Could not detect game dimensions, using defaults');
+                        gameOriginalWidth = 800;
+                        gameOriginalHeight = 600;
+                        clearInterval(checkDimensions);
+                        applyScale();
+                        resolve();
+                    }
+                }, 100);
+            });
         }
         
         // 缩放功能
@@ -732,12 +759,28 @@
             const wrapper = document.getElementById('game-player-wrapper');
             currentScale = scaleSteps[currentScaleIndex];
             
-            // 根据游戏原始尺寸和当前缩放比例设置容器大小
             const scaledWidth = gameOriginalWidth * currentScale;
             const scaledHeight = gameOriginalHeight * currentScale;
             
-            wrapper.style.width = `${scaledWidth}px`;
-            wrapper.style.height = `${scaledHeight}px`;
+            // 获取视口宽度，确保游戏不会超出屏幕
+            const maxWidth = window.innerWidth - 40; // 留出一些边距
+            const maxHeight = window.innerHeight - 300; // 留出导航栏和控制按钮的空间
+            
+            let finalWidth = scaledWidth;
+            let finalHeight = scaledHeight;
+            
+            // 如果游戏尺寸超出屏幕，按比例缩小
+            if (finalWidth > maxWidth || finalHeight > maxHeight) {
+                const widthRatio = maxWidth / finalWidth;
+                const heightRatio = maxHeight / finalHeight;
+                const ratio = Math.min(widthRatio, heightRatio);
+                
+                finalWidth = finalWidth * ratio;
+                finalHeight = finalHeight * ratio;
+            }
+            
+            wrapper.style.width = `${finalWidth}px`;
+            wrapper.style.height = `${finalHeight}px`;
             
             // 更新Ruffle实例的尺寸
             if (currentGameInstance && currentGameInstance.style) {
@@ -745,7 +788,7 @@
                 currentGameInstance.style.height = '100%';
             }
             
-            console.log(`Applied scale: ${currentScale}, container size: ${scaledWidth}x${scaledHeight}`);
+            console.log(`Applied scale: ${currentScale * 100}%, container size: ${Math.round(finalWidth)}x${Math.round(finalHeight)}`);
         }
         
         function toggleFullscreen() {
