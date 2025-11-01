@@ -156,6 +156,7 @@
             align-items: center;
             margin-bottom: 1rem;
             position: relative;
+            overflow: auto;
         }
         
         #game-player-wrapper {
@@ -166,8 +167,8 @@
             background-color: #000;
             overflow: hidden;
             max-width: 100%;
-            width: 800px;
-            height: 600px;
+            transform-origin: center center;
+            transition: transform 0.3s ease;
         }
         
         #game-player {
@@ -484,6 +485,10 @@
         // 全局变量
         let currentGameInstance = null;
         let currentGameData = null;
+        let currentScale = 1;
+        const scaleStep = 0.25;
+        const minScale = 0.5;
+        const maxScale = 2;
         
         window.RufflePlayer = window.RufflePlayer || {};
         window.RufflePlayer.config = {
@@ -572,6 +577,9 @@
                         </div>
                     </div>
                     <div class="game-controls">
+                        <button class="control-btn" id="zoom-out">缩小</button>
+                        <button class="control-btn" id="zoom-reset">重置</button>
+                        <button class="control-btn" id="zoom-in">放大</button>
                         <button class="control-btn" id="fullscreen">全屏</button>
                         <button class="control-btn" id="replay">重玩</button>
                     </div>
@@ -623,13 +631,43 @@
         }
         
         function setupControls() {
+            document.getElementById('zoom-in').addEventListener('click', zoomIn);
+            document.getElementById('zoom-out').addEventListener('click', zoomOut);
+            document.getElementById('zoom-reset').addEventListener('click', zoomReset);
             document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
             document.getElementById('replay').addEventListener('click', replayGame);
+        }
+        
+        function zoomIn() {
+            if (currentScale < maxScale) {
+                currentScale = Math.min(currentScale + scaleStep, maxScale);
+                applyZoom();
+            }
+        }
+        
+        function zoomOut() {
+            if (currentScale > minScale) {
+                currentScale = Math.max(currentScale - scaleStep, minScale);
+                applyZoom();
+            }
+        }
+        
+        function zoomReset() {
+            currentScale = 1;
+            applyZoom();
+        }
+        
+        function applyZoom() {
+            const wrapper = document.getElementById('game-player-wrapper');
+            if (wrapper) {
+                wrapper.style.transform = `scale(${currentScale})`;
+            }
         }
         
         // 重玩游戏
         function replayGame() {
             if (currentGameData) {
+                currentScale = 1;
                 loadGame(currentGameData);
             }
         }
@@ -667,6 +705,10 @@
                         loadingElement.style.display = 'none';
                     }
                     
+                    setTimeout(() => {
+                        adjustGameSize();
+                    }, 500);
+                    
                 }).catch(error => {
                     console.error('Error loading game:', error);
                     if (loadingElement) {
@@ -682,6 +724,35 @@
                     loadingElement.style.display = 'none';
                 }
                 showError('创建游戏播放器失败');
+            }
+        }
+        
+        function adjustGameSize() {
+            if (!currentGameInstance) return;
+            
+            try {
+                const wrapper = document.getElementById('game-player-wrapper');
+                const metadata = currentGameInstance.metadata;
+                
+                if (metadata && metadata.width && metadata.height) {
+                    const gameWidth = metadata.width;
+                    const gameHeight = metadata.height;
+                    
+                    console.log('Game dimensions:', gameWidth, 'x', gameHeight);
+                    
+                    wrapper.style.width = gameWidth + 'px';
+                    wrapper.style.height = gameHeight + 'px';
+                } else {
+                    // 如果无法获取游戏尺寸，使用默认尺寸
+                    console.log('Using default dimensions: 800x600');
+                    wrapper.style.width = '800px';
+                    wrapper.style.height = '600px';
+                }
+                
+                // 应用当前缩放
+                applyZoom();
+            } catch (error) {
+                console.error('Error adjusting game size:', error);
             }
         }
         
