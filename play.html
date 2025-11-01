@@ -313,6 +313,23 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* 隐藏Ruffle默认的加载动画和右键菜单 */
+        ruffle-player {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 隐藏Ruffle的默认加载界面 */
+        ruffle-player::part(splash-screen),
+        ruffle-player::part(play-button) {
+            display: none !important;
+        }
+        
+        /* 隐藏Ruffle的右键菜单 */
+        ruffle-player::part(context-menu) {
+            display: none !important;
+        }
+        
         /* 响应式设计 */
         @media (max-width: 768px) {
             .nav-container {
@@ -401,9 +418,12 @@
         let currentGameInstance = null;
         let currentScale = 1.0;
         const MIN_SCALE = 0.5;
-        const MAX_SCALE = 2.0;
+        const MAX_SCALE = 1.5; // 修改最大缩放限制为150%
         const DEFAULT_WIDTH = 800;
         const DEFAULT_HEIGHT = 600;
+        let currentGameData = null; // 保存当前游戏数据用于重玩
+        let isFullscreen = false; // 跟踪全屏状态
+        let savedScale = 1.0; // 保存进入全屏前的缩放比例
         
         // 获取网站根路径
         function getBaseUrl() {
@@ -453,6 +473,7 @@
         
         // 渲染游戏页面
         function renderGame(game) {
+            currentGameData = game; // 保存游戏数据
             const container = document.getElementById('game-content');
             
             container.innerHTML = `
@@ -472,6 +493,7 @@
                         <button class="control-btn" id="zoom-out">缩小</button>
                         <button class="control-btn" id="fullscreen">全屏</button>
                         <button class="control-btn" id="reset">重置大小</button>
+                        <button class="control-btn" id="replay">重玩</button>
                     </div>
                     <div class="scale-info">
                         当前缩放: <span id="scale-value">100%</span>
@@ -538,6 +560,7 @@
             document.getElementById('zoom-out').addEventListener('click', zoomOut);
             document.getElementById('fullscreen').addEventListener('click', toggleFullscreen);
             document.getElementById('reset').addEventListener('click', resetSize);
+            document.getElementById('replay').addEventListener('click', replayGame); // 添加重玩按钮事件
             
             // 监听全屏变化
             document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -580,6 +603,7 @@
                     // 设置质量和缩放模式
                     quality: "high",
                     scale: "showall",
+                    contextMenu: false,
                     // Flash参数
                     parameters: {
                         // 再次在parameters中设置base，确保兼容性
@@ -655,30 +679,62 @@
             updateZoomButtons();
         }
         
+        function replayGame() {
+            if (currentGameData) {
+                // 重置缩放
+                currentScale = 1.0;
+                // 重新加载游戏
+                loadGame(currentGameData);
+                updateZoomButtons();
+            }
+        }
+        
         // 更新游戏尺寸
         function updateGameSize() {
             const wrapper = document.getElementById('game-player-wrapper');
             const scaleValue = document.getElementById('scale-value');
             
             if (wrapper) {
-                const newWidth = DEFAULT_WIDTH * currentScale;
-                const newHeight = DEFAULT_HEIGHT * currentScale;
-                
-                wrapper.style.width = `${newWidth}px`;
-                wrapper.style.height = `${newHeight}px`;
-                
-                // 更新缩放百分比显示
-                scaleValue.textContent = `${Math.round(currentScale * 100)}%`;
-                
-                // 更新Ruffle播放器尺寸
-                if (currentGameInstance) {
-                    // 直接设置Ruffle实例的尺寸
-                    currentGameInstance.style.width = `${newWidth}px`;
-                    currentGameInstance.style.height = `${newHeight}px`;
+                if (isFullscreen) {
+                    const screenWidth = window.screen.width;
+                    const screenHeight = window.screen.height;
                     
-                    // 尝试调用Ruffle的内部方法重新调整大小
-                    if (currentGameInstance.resize) {
-                        currentGameInstance.resize(newWidth, newHeight);
+                    // 计算适配屏幕的缩放比例，保持游戏宽高比
+                    const scaleX = screenWidth / DEFAULT_WIDTH;
+                    const scaleY = screenHeight / DEFAULT_HEIGHT;
+                    const fitScale = Math.min(scaleX, scaleY);
+                    
+                    const newWidth = DEFAULT_WIDTH * fitScale;
+                    const newHeight = DEFAULT_HEIGHT * fitScale;
+                    
+                    wrapper.style.width = `${newWidth}px`;
+                    wrapper.style.height = `${newHeight}px`;
+                    
+                    // 更新Ruffle播放器尺寸
+                    if (currentGameInstance) {
+                        currentGameInstance.style.width = `${newWidth}px`;
+                        currentGameInstance.style.height = `${newHeight}px`;
+                    }
+                } else {
+                    // 正常模式，使用当前缩放比例
+                    const newWidth = DEFAULT_WIDTH * currentScale;
+                    const newHeight = DEFAULT_HEIGHT * currentScale;
+                    
+                    wrapper.style.width = `${newWidth}px`;
+                    wrapper.style.height = `${newHeight}px`;
+                    
+                    // 更新缩放百分比显示
+                    scaleValue.textContent = `${Math.round(currentScale * 100)}%`;
+                    
+                    // 更新Ruffle播放器尺寸
+                    if (currentGameInstance) {
+                        currentGameInstance.style.width = `${newWidth}px`;
+                        currentGameInstance.style.height = `${newHeight}px`;
+                        
+                        // 尝试调用Ruffle的内部方法重新调整大小
+                        if (currentGameInstance.resize) {
+                            currentGameInstance.resize(newWidth, newHeight);
+                        }
                     }
                 }
             }
@@ -722,8 +778,14 @@
             
             if (document.fullscreenElement) {
                 fullscreenBtn.textContent = '退出全屏';
+                isFullscreen = true;
+                savedScale = currentScale; // 保存当前缩放比例
+                updateGameSize(); // 调整为全屏尺寸
             } else {
                 fullscreenBtn.textContent = '全屏';
+                isFullscreen = false;
+                currentScale = savedScale; // 恢复之前的缩放比例
+                updateGameSize(); // 恢复原始尺寸
             }
         }
         
@@ -731,19 +793,19 @@
         function loadComments(gameId) {
             const commentsContainer = document.getElementById('giscus-comments');
             
-            // 创建giscus评论组件
             const script = document.createElement('script');
             script.src = "https://giscus.app/client.js";
-            script.setAttribute('data-repo', "mtdcmz/flash-games-archive"); // 替换为您的仓库
-            script.setAttribute('data-repo-id', ""); // 需要替换为实际的仓库ID
-            script.setAttribute('data-category', "Comments");
-            script.setAttribute('data-category-id', ""); // 需要替换为实际的分类ID
-            script.setAttribute('data-mapping', "specific");
-            script.setAttribute('data-term', gameId);
+            script.setAttribute('data-repo', "mtdcmz/flash-games-archive");
+            script.setAttribute('data-repo-id', "R_kgDOQNNeeg");
+            script.setAttribute('data-category', "Announcements");
+            script.setAttribute('data-category-id', "DIC_kwDOQNNees4CxVHE");
+            script.setAttribute('data-mapping', "specific"); // 使用specific映射
+            script.setAttribute('data-term', `game-${gameId}`); // 使用游戏ID作为唯一标识
+            script.setAttribute('data-strict', "0");
             script.setAttribute('data-reactions-enabled', "1");
             script.setAttribute('data-emit-metadata', "0");
             script.setAttribute('data-input-position', "bottom");
-            script.setAttribute('data-theme', "light");
+            script.setAttribute('data-theme', "preferred_color_scheme");
             script.setAttribute('data-lang', "zh-CN");
             script.setAttribute('crossorigin', "anonymous");
             script.async = true;
