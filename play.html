@@ -12,7 +12,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* 统一字体 */
         }
         
         body {
@@ -304,6 +304,65 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* 免责声明模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-title {
+            color: var(--primary-dark);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .modal-text {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .modal-btn {
+            padding: 0.7rem 1.5rem;
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .modal-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .modal-btn:not(:disabled):hover {
+            background-color: var(--primary-dark);
+        }
+        
         /* 响应式设计 - 平板 */
         @media (max-width: 1024px) {
             .container {
@@ -465,6 +524,22 @@
         </div>
     </div>
 
+    <!-- 免责声明模态框 -->
+    <div id="disclaimer-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">免责声明</h2>
+            <div class="modal-text">
+                <p>本网站主要对一些被4399小游戏下架的网游进行破解并单机化，仅供个人学习、研究和娱乐使用。</p>
+                <p>网站内容可能涉及版权问题，但本站不以盈利为目的，所有游戏资源仅供技术研究和怀旧收藏。</p>
+                <p>如果您是游戏版权所有者并认为本站内容侵犯了您的权益，请通过GitHub联系我，我将及时处理。</p>
+                <p>继续使用本网站即表示您理解并同意以上声明。</p>
+            </div>
+            <div class="modal-footer">
+                <button id="agree-btn" class="modal-btn" disabled>同意并继续 (10)</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 禁止右键菜单和文本选择
         document.addEventListener('contextmenu', function(e) {
@@ -518,6 +593,19 @@
         
         // 加载游戏数据
         document.addEventListener('DOMContentLoaded', function() {
+            // 检查是否已经同意免责声明
+            const hasAgreed = localStorage.getItem('disclaimerAgreed');
+            
+            // 如果没有同意，显示免责声明
+            if (!hasAgreed) {
+                showDisclaimer();
+            } else {
+                loadGamePage();
+            }
+        });
+        
+        // 加载游戏页面
+        function loadGamePage() {
             const urlParams = new URLSearchParams(window.location.search);
             const gameId = urlParams.get('id');
             
@@ -527,7 +615,7 @@
             }
             
             loadGameData(gameId);
-        });
+        }
         
         // 加载游戏数据
         function loadGameData(gameId) {
@@ -863,6 +951,35 @@
                     <button onclick="window.location.href='index.html'">返回主页</button>
                 </div>
             `;
+        }
+        
+        // 显示免责声明
+        function showDisclaimer() {
+            const modal = document.getElementById('disclaimer-modal');
+            const agreeBtn = document.getElementById('agree-btn');
+            
+            modal.style.display = 'flex';
+            
+            let countdown = 10;
+            agreeBtn.textContent = `同意并继续 (${countdown})`;
+            
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                agreeBtn.textContent = `同意并继续 (${countdown})`;
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    agreeBtn.disabled = false;
+                    agreeBtn.textContent = '同意并继续';
+                }
+            }, 1000);
+            
+            // 同意按钮点击事件
+            agreeBtn.addEventListener('click', function() {
+                localStorage.setItem('disclaimerAgreed', 'true');
+                modal.style.display = 'none';
+                loadGamePage();
+            });
         }
     </script>
 </body>
