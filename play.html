@@ -363,54 +363,6 @@
             background-color: var(--primary-dark);
         }
         
-        /* 自定义右键菜单样式 - 紫色边框、半透明黑色背景、白色文本 */
-        .custom-context-menu {
-            position: fixed;
-            background-color: rgba(0, 0, 0, 0.9);
-            border: 2px solid #9c4dcc;
-            border-radius: 6px;
-            padding: 4px 0;
-            min-width: 200px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            z-index: 10000;
-            display: none;
-            backdrop-filter: blur(10px);
-        }
-        
-        .custom-context-menu.show {
-            display: block;
-        }
-        
-        .context-menu-item {
-            padding: 10px 20px;
-            color: #ffffff;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .context-menu-item:hover {
-            background-color: rgba(156, 77, 204, 0.3);
-        }
-        
-        .context-menu-separator {
-            height: 1px;
-            background-color: rgba(156, 77, 204, 0.5);
-            margin: 4px 0;
-        }
-        
-        .context-menu-item.disabled {
-            color: #888888;
-            cursor: not-allowed;
-        }
-        
-        .context-menu-item.disabled:hover {
-            background-color: transparent;
-        }
-        
         /* 响应式设计 - 平板 */
         @media (max-width: 1024px) {
             .container {
@@ -577,9 +529,9 @@
         <div class="modal-content">
             <h2 class="modal-title">免责声明</h2>
             <div class="modal-text">
-                <p>本网站主要对一些被4399小游戏下架的网游进行破解并单机化,仅供个人学习、研究和娱乐使用。</p>
-                <p>网站内容可能涉及版权问题,但本站不以盈利为目的,所有游戏资源仅供技术研究和怀旧收藏。</p>
-                <p>如果您是游戏版权所有者并认为本站内容侵犯了您的权益,请通过GitHub联系我,我将及时处理。</p>
+                <p>本网站主要对一些被4399小游戏下架的网游进行破解并单机化，仅供个人学习、研究和娱乐使用。</p>
+                <p>网站内容可能涉及版权问题，但本站不以盈利为目的，所有游戏资源仅供技术研究和怀旧收藏。</p>
+                <p>如果您是游戏版权所有者并认为本站内容侵犯了您的权益，请通过GitHub联系我，我将及时处理。</p>
                 <p>继续使用本网站即表示您理解并同意以上声明。</p>
             </div>
             <div class="modal-footer">
@@ -588,27 +540,8 @@
         </div>
     </div>
 
-    <!-- 自定义右键菜单 -->
-    <div id="custom-context-menu" class="custom-context-menu">
-        <div class="context-menu-item" data-action="archive">MTDCMZ's Flash Games Archive</div>
-        <div class="context-menu-separator"></div>
-        <div class="context-menu-item" data-action="play">播放</div>
-        <div class="context-menu-item" data-action="forward">前进</div>
-        <div class="context-menu-item" data-action="back">后退</div>
-        <div class="context-menu-separator"></div>
-        <div class="context-menu-item" data-action="quality">质量</div>
-        <div class="context-menu-item" data-action="volume">音量</div>
-        <div class="context-menu-separator"></div>
-        <div class="context-menu-item" data-action="fullscreen">全屏</div>
-        <div class="context-menu-separator"></div>
-        <div class="context-menu-item" data-action="copy-debug">复制调试信息</div>
-        <div class="context-menu-item" data-action="open-save">打开保存管理器</div>
-        <div class="context-menu-separator"></div>
-        <div class="context-menu-item" data-action="about">Core: Ruffle</div>
-    </div>
-
     <script>
-        // 禁止页面右键菜单和文本选择
+        // 禁止右键菜单和文本选择
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         });
@@ -625,8 +558,6 @@
         let currentScale = 1;
         const scaleSteps = [0.5, 0.75, 1, 1.25, 1.5, 2];
         let currentScaleIndex = 2; // 默认100%缩放
-        let currentQuality = 'high'; // 默认高质量
-        const qualityLevels = ['low', 'medium', 'high'];
         
         window.RufflePlayer = window.RufflePlayer || {};
         window.RufflePlayer.config = {
@@ -650,128 +581,14 @@
             backgroundColor: '#000000',
             quality: 'high',
             scale: 'showAll',
-            align: 'center',
-            contextMenu: false // 禁用Ruffle原生右键菜单
+            align: 'center'
         };
         
-        const contextMenu = document.getElementById('custom-context-menu');
-        
-        // 显示自定义右键菜单
-        function showContextMenu(x, y) {
-            contextMenu.style.left = x + 'px';
-            contextMenu.style.top = y + 'px';
-            contextMenu.classList.add('show');
-            
-            // 确保菜单不会超出视口
-            const menuRect = contextMenu.getBoundingClientRect();
-            if (menuRect.right > window.innerWidth) {
-                contextMenu.style.left = (window.innerWidth - menuRect.width - 10) + 'px';
-            }
-            if (menuRect.bottom > window.innerHeight) {
-                contextMenu.style.top = (window.innerHeight - menuRect.height - 10) + 'px';
-            }
-        }
-        
-        // 隐藏自定义右键菜单
-        function hideContextMenu() {
-            contextMenu.classList.remove('show');
-        }
-        
-        // 点击页面其他地方隐藏菜单
-        document.addEventListener('click', hideContextMenu);
-        
-        // 处理右键菜单项点击
-        contextMenu.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const item = e.target.closest('.context-menu-item');
-            if (!item || item.classList.contains('disabled')) return;
-            
-            const action = item.getAttribute('data-action');
-            handleContextMenuAction(action);
-            hideContextMenu();
-        });
-        
-        // 处理右键菜单动作
-        function handleContextMenuAction(action) {
-            switch(action) {
-                case 'archive':
-                    window.open('https://flash-lol.pages.dev/', '_blank');
-                    break;
-                case 'play':
-                    if (currentGameInstance && currentGameInstance.play) {
-                        currentGameInstance.play();
-                    }
-                    break;
-                case 'forward':
-                    // Ruffle前进功能
-                    console.log('Forward action');
-                    break;
-                case 'back':
-                    // Ruffle后退功能
-                    console.log('Back action');
-                    break;
-                case 'quality':
-                    cycleQuality();
-                    break;
-                case 'volume':
-                    // 音量控制
-                    console.log('Volume control');
-                    break;
-                case 'fullscreen':
-                    toggleFullscreen();
-                    break;
-                case 'copy-debug':
-                    copyDebugInfo();
-                    break;
-                case 'open-save':
-                    // 打开保存管理器
-                    console.log('Open save manager');
-                    alert('保存管理器功能');
-                    break;
-                case 'about':
-                    window.open('https://ruffle.rs/', '_blank');
-                    break;
-            }
-        }
-        
-        function cycleQuality() {
-            const currentIndex = qualityLevels.indexOf(currentQuality);
-            const nextIndex = (currentIndex + 1) % qualityLevels.length;
-            currentQuality = qualityLevels[nextIndex];
-            
-            if (currentGameInstance && currentGameInstance.config) {
-                currentGameInstance.config.quality = currentQuality;
-            }
-            
-            const qualityNames = {
-                'low': '低',
-                'medium': '中',
-                'high': '高'
-            };
-            
-            alert(`质量已切换为: ${qualityNames[currentQuality]}`);
-            console.log(`Quality changed to: ${currentQuality}`);
-        }
-        
-        // 复制调试信息
-        function copyDebugInfo() {
-            const debugInfo = `
-Ruffle Debug Info
------------------
-Game: ${currentGameData ? currentGameData.name : 'Unknown'}
-Game ID: ${currentGameData ? currentGameData.id : 'Unknown'}
-Ruffle Version: ${window.RufflePlayer ? window.RufflePlayer.version : 'Unknown'}
-User Agent: ${navigator.userAgent}
-Screen: ${window.screen.width}x${window.screen.height}
-Viewport: ${window.innerWidth}x${window.innerHeight}
-Quality: ${currentQuality}
-            `.trim();
-            
-            navigator.clipboard.writeText(debugInfo).then(() => {
-                alert('调试信息已复制到剪贴板');
-            }).catch(err => {
-                console.error('复制失败:', err);
-            });
+        // 获取网站根路径
+        function getBaseUrl() {
+            const currentUrl = window.location.href;
+            const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
+            return baseUrl;
         }
         
         // 加载游戏数据
@@ -779,7 +596,7 @@ Quality: ${currentQuality}
             // 检查是否已经同意免责声明
             const hasAgreed = localStorage.getItem('disclaimerAgreed');
             
-            // 如果没有同意,显示免责声明
+            // 如果没有同意，显示免责声明
             if (!hasAgreed) {
                 showDisclaimer();
             } else {
@@ -863,7 +680,7 @@ Quality: ${currentQuality}
                 loadGame(game);
             }).catch(error => {
                 console.error('Ruffle加载失败:', error);
-                showError('Flash模拟器加载失败,请刷新页面重试');
+                showError('Flash模拟器加载失败，请刷新页面重试');
             });
             
             setupControls();
@@ -910,13 +727,6 @@ Quality: ${currentQuality}
             }
         }
         
-        // 获取基础URL
-        function getBaseUrl() {
-            const path = window.location.pathname;
-            const directory = path.substring(0, path.lastIndexOf('/'));
-            return window.location.origin + directory;
-        }
-        
         // 加载游戏
         function loadGame(game) {
             const player = document.getElementById('game-player');
@@ -926,12 +736,6 @@ Quality: ${currentQuality}
                 const ruffle = window.RufflePlayer.newest();
                 currentGameInstance = ruffle.createPlayer();
                 player.appendChild(currentGameInstance);
-                
-                currentGameInstance.addEventListener('contextmenu', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    showContextMenu(e.pageX, e.pageY);
-                });
                 
                 const baseUrl = getBaseUrl();
                 const gamePath = `${baseUrl}/games/${game.id}/${game.file}`;
@@ -963,7 +767,7 @@ Quality: ${currentQuality}
                     if (loadingElement) {
                         loadingElement.style.display = 'none';
                     }
-                    showError('加载游戏失败,请检查游戏文件是否存在');
+                    showError('加载游戏失败，请检查游戏文件是否存在');
                 });
                 
             } catch (error) {
@@ -1046,14 +850,14 @@ Quality: ${currentQuality}
             const scaledWidth = gameOriginalWidth * currentScale;
             const scaledHeight = gameOriginalHeight * currentScale;
             
-            // 获取视口宽度,确保游戏不会超出屏幕
+            // 获取视口宽度，确保游戏不会超出屏幕
             const maxWidth = window.innerWidth - 40; // 留出一些边距
             const maxHeight = window.innerHeight - 300; // 留出导航栏和控制按钮的空间
             
             let finalWidth = scaledWidth;
             let finalHeight = scaledHeight;
             
-            // 如果游戏尺寸超出屏幕,按比例缩小
+            // 如果游戏尺寸超出屏幕，按比例缩小
             if (finalWidth > maxWidth || finalHeight > maxHeight) {
                 const widthRatio = maxWidth / finalWidth;
                 const heightRatio = maxHeight / finalHeight;
@@ -1081,7 +885,7 @@ Quality: ${currentQuality}
                     currentGameInstance.enterFullscreen();
                 } catch (error) {
                     console.error('全屏失败:', error);
-                    // 如果Ruffle的全屏方法失败,尝试使用标准全屏API
+                    // 如果Ruffle的全屏方法失败，尝试使用标准全屏API
                     const wrapper = document.getElementById('game-player-wrapper');
                     if (wrapper.requestFullscreen) {
                         wrapper.requestFullscreen();
@@ -1092,7 +896,7 @@ Quality: ${currentQuality}
                     }
                 }
             } else {
-                // 如果Ruffle实例不支持enterFullscreen,使用标准全屏API
+                // 如果Ruffle实例不支持enterFullscreen，使用标准全屏API
                 const wrapper = document.getElementById('game-player-wrapper');
                 if (!document.fullscreenElement) {
                     if (wrapper.requestFullscreen) {
