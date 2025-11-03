@@ -910,6 +910,13 @@ Quality: ${currentQuality}
             }
         }
         
+        // 获取基础URL
+        function getBaseUrl() {
+            const path = window.location.pathname;
+            const directory = path.substring(0, path.lastIndexOf('/'));
+            return window.location.origin + directory;
+        }
+        
         // 加载游戏
         function loadGame(game) {
             const player = document.getElementById('game-player');
