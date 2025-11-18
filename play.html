@@ -200,6 +200,90 @@
             margin-bottom: 10px;
         }
         
+        /* 添加加载进度条样式 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(106, 27, 154, 0.95), rgba(56, 0, 107, 0.95));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .loading-title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-dark);
+            margin-bottom: 1.5rem;
+        }
+        
+        .loading-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .loading-filename {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        
+        .loading-speed {
+            font-weight: 500;
+            color: #4caf50;
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 30px;
+            background-color: #f0f0f0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+            border-radius: 15px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+        
+        .loading-details {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #888;
+        }
+        
         .game-controls {
             display: flex;
             justify-content: center;
@@ -446,6 +530,15 @@
             .comments-title {
                 font-size: 1.1rem;
             }
+            
+            /* 移动端加载进度条样式调整 */
+            .loading-container {
+                padding: 1.5rem;
+            }
+            
+            .loading-title {
+                font-size: 1.2rem;
+            }
         }
         
         /* 响应式设计 - 小屏手机 */
@@ -491,6 +584,23 @@
     </style>
 </head>
 <body>
+    <!-- 添加加载进度条覆盖层 -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-container">
+            <div class="loading-title">正在加载游戏</div>
+            <div class="loading-info">
+                <span class="loading-filename" id="loading-filename">准备中...</span>
+                <span class="loading-speed" id="loading-speed">0 KB/s</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar">0%</div>
+            </div>
+            <div class="loading-details" id="loading-details">
+                已加载: <span id="loaded-size">0</span> / 总大小: <span id="total-size">0</span>
+            </div>
+        </div>
+    </div>
+
     <!-- 导航栏 -->
     <nav class="navbar">
         <div class="nav-container">
@@ -529,7 +639,7 @@
         <div class="modal-content">
             <h2 class="modal-title">免责声明</h2>
             <div class="modal-text">
-                <p>本网站主要对一些被4399小游戏下架的网游进行破解并单机化，仅供个人学习、研究和娱乐使用。</p>
+                <p>本网站主要对一些被4399小游戏下架的网游进行破解并单机化,仅供个人学习、研究和娱乐使用。</p>
                 <p>网站内容可能涉及版权问题，但本站不以盈利为目的，所有游戏资源仅供技术研究和怀旧收藏。</p>
                 <p>如果您是游戏版权所有者并认为本站内容侵犯了您的权益，请通过GitHub联系我，我将及时处理。</p>
                 <p>继续使用本网站即表示您理解并同意以上声明。</p>
@@ -559,6 +669,14 @@
         const scaleSteps = [0.5, 0.75, 1, 1.25, 1.5, 2];
         let currentScaleIndex = 2; // 默认100%缩放
         
+        let loadingProgress = {
+            ruffle: { loaded: 0, total: 0, complete: false },
+            game: { loaded: 0, total: 0, complete: false }
+        };
+        let loadingStartTime = Date.now();
+        let lastLoadedBytes = 0;
+        let speedUpdateInterval = null;
+        
         window.RufflePlayer = window.RufflePlayer || {};
         window.RufflePlayer.config = {
             fontSources: ["games/fonts.swf"],
@@ -584,6 +702,128 @@
             align: 'center'
         };
         
+        function updateLoadingProgress() {
+            const progressBar = document.getElementById('progress-bar');
+            const loadingFilename = document.getElementById('loading-filename');
+            const loadingSpeed = document.getElementById('loading-speed');
+            const loadedSize = document.getElementById('loaded-size');
+            const totalSize = document.getElementById('total-size');
+            
+            if (!progressBar) return;
+            
+            // 计算总进度
+            let totalLoaded = 0;
+            let totalTotal = 0;
+            let currentFilename = '';
+            
+            if (!loadingProgress.ruffle.complete) {
+                currentFilename = '正在加载插件';
+                totalLoaded = loadingProgress.ruffle.loaded;
+                totalTotal = loadingProgress.ruffle.total || 1000000; // 估计1MB
+            } else if (!loadingProgress.game.complete) {
+                currentFilename = '正在加载游戏文件';
+                totalLoaded = loadingProgress.ruffle.total + loadingProgress.game.loaded;
+                totalTotal = loadingProgress.ruffle.total + loadingProgress.game.total;
+            }
+            
+            const percentage = totalTotal > 0 ? Math.min((totalLoaded / totalTotal) * 100, 100) : 0;
+            
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = Math.round(percentage) + '%';
+            loadingFilename.textContent = currentFilename;
+            
+            // 更新文件大小显示
+            loadedSize.textContent = formatBytes(totalLoaded);
+            totalSize.textContent = formatBytes(totalTotal);
+        }
+        
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+        }
+        
+        function formatSpeed(bytesPerSecond) {
+            if (bytesPerSecond === 0) return '0 KB/s';
+            const k = 1024;
+            const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
+            const i = Math.floor(Math.log(bytesPerSecond) / Math.log(k));
+            return Math.round((bytesPerSecond / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+        }
+        
+        function startSpeedMonitoring() {
+            lastLoadedBytes = 0;
+            let lastTime = Date.now();
+            
+            speedUpdateInterval = setInterval(() => {
+                const currentTime = Date.now();
+                const timeElapsed = (currentTime - lastTime) / 1000; // 秒
+                
+                const totalLoaded = loadingProgress.ruffle.loaded + loadingProgress.game.loaded;
+                const bytesLoaded = totalLoaded - lastLoadedBytes;
+                const speed = timeElapsed > 0 ? bytesLoaded / timeElapsed : 0;
+                
+                const loadingSpeed = document.getElementById('loading-speed');
+                if (loadingSpeed) {
+                    loadingSpeed.textContent = formatSpeed(speed);
+                }
+                
+                lastLoadedBytes = totalLoaded;
+                lastTime = currentTime;
+            }, 500); // 每500ms更新一次速度
+        }
+        
+        function hideLoadingOverlay() {
+            if (speedUpdateInterval) {
+                clearInterval(speedUpdateInterval);
+                speedUpdateInterval = null;
+            }
+            
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 500);
+            }
+        }
+        
+        function showLoadingOverlay() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                overlay.classList.remove('hidden');
+            }
+            
+            // 重置进度
+            loadingProgress = {
+                ruffle: { loaded: 0, total: 0, complete: false },
+                game: { loaded: 0, total: 0, complete: false }
+            };
+            loadingStartTime = Date.now();
+            
+            startSpeedMonitoring();
+            updateLoadingProgress();
+        }
+        
+        function simulateRuffleLoading() {
+            loadingProgress.ruffle.total = 800000; // 估计800KB
+            let loaded = 0;
+            const interval = setInterval(() => {
+                loaded += 50000; // 每次增加50KB
+                loadingProgress.ruffle.loaded = Math.min(loaded, loadingProgress.ruffle.total);
+                updateLoadingProgress();
+                
+                if (loaded >= loadingProgress.ruffle.total) {
+                    clearInterval(interval);
+                    loadingProgress.ruffle.complete = true;
+                    updateLoadingProgress();
+                }
+            }, 100);
+        }
+        
         // 获取网站根路径
         function getBaseUrl() {
             const currentUrl = window.location.href;
@@ -593,6 +833,11 @@
         
         // 加载游戏数据
         document.addEventListener('DOMContentLoaded', function() {
+            showLoadingOverlay();
+            
+            // 模拟Ruffle加载进度
+            simulateRuffleLoading();
+            
             // 检查是否已经同意免责声明
             const hasAgreed = localStorage.getItem('disclaimerAgreed');
             
@@ -611,6 +856,7 @@
             
             if (!gameId) {
                 showError('缺少游戏ID参数');
+                hideLoadingOverlay();
                 return;
             }
             
@@ -634,11 +880,13 @@
                         renderGame(game);
                     } else {
                         showError('找不到指定的游戏');
+                        hideLoadingOverlay();
                     }
                 })
                 .catch(error => {
                     console.error('Error loading game:', error);
                     showError('加载游戏数据失败');
+                    hideLoadingOverlay();
                 });
         }
         
@@ -681,6 +929,7 @@
             }).catch(error => {
                 console.error('Ruffle加载失败:', error);
                 showError('Flash模拟器加载失败，请刷新页面重试');
+                hideLoadingOverlay();
             });
             
             setupControls();
@@ -723,11 +972,12 @@
         // 重玩游戏
         function replayGame() {
             if (currentGameData) {
+                showLoadingOverlay();
+                simulateRuffleLoading();
                 loadGame(currentGameData);
             }
         }
         
-        // 加载游戏
         function loadGame(game) {
             const player = document.getElementById('game-player');
             player.innerHTML = '';
@@ -749,26 +999,67 @@
                     loadingElement.style.display = 'flex';
                 }
                 
-                currentGameInstance.load({
-                    url: gamePath,
-                    base: gameBaseUrl
-                }).then(() => {
-                    console.log('Game loaded successfully');
-                    console.log('Game base path set to:', gameBaseUrl);
-                    
-                    waitForGameDimensions().then(() => {
+                // 使用fetch监控游戏文件加载进度
+                fetch(gamePath)
+                    .then(response => {
+                        const contentLength = response.headers.get('content-length');
+                        if (contentLength) {
+                            loadingProgress.game.total = parseInt(contentLength, 10);
+                        }
+                        
+                        const reader = response.body.getReader();
+                        const chunks = [];
+                        
+                        function readChunk() {
+                            return reader.read().then(({ done, value }) => {
+                                if (done) {
+                                    loadingProgress.game.complete = true;
+                                    updateLoadingProgress();
+                                    
+                                    // 合并所有chunks并创建blob
+                                    const blob = new Blob(chunks);
+                                    return blob.arrayBuffer();
+                                }
+                                
+                                chunks.push(value);
+                                loadingProgress.game.loaded += value.length;
+                                updateLoadingProgress();
+                                
+                                return readChunk();
+                            });
+                        }
+                        
+                        return readChunk();
+                    })
+                    .then(arrayBuffer => {
+                        // 使用arrayBuffer加载游戏
+                        const blob = new Blob([arrayBuffer]);
+                        const url = URL.createObjectURL(blob);
+                        
+                        return currentGameInstance.load({
+                            url: url,
+                            base: gameBaseUrl
+                        });
+                    })
+                    .then(() => {
+                        console.log('Game loaded successfully');
+                        console.log('Game base path set to:', gameBaseUrl);
+                        
+                        waitForGameDimensions().then(() => {
+                            if (loadingElement) {
+                                loadingElement.style.display = 'none';
+                            }
+                            hideLoadingOverlay();
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading game:', error);
                         if (loadingElement) {
                             loadingElement.style.display = 'none';
                         }
+                        hideLoadingOverlay();
+                        showError('加载游戏失败，请检查游戏文件是否存在');
                     });
-                    
-                }).catch(error => {
-                    console.error('Error loading game:', error);
-                    if (loadingElement) {
-                        loadingElement.style.display = 'none';
-                    }
-                    showError('加载游戏失败，请检查游戏文件是否存在');
-                });
                 
             } catch (error) {
                 console.error('Error creating Ruffle player:', error);
@@ -776,6 +1067,7 @@
                 if (loadingElement) {
                     loadingElement.style.display = 'none';
                 }
+                hideLoadingOverlay();
                 showError('创建游戏播放器失败');
             }
         }
