@@ -466,6 +466,11 @@
                 font-size: 0.9rem;
             }
             
+            .nav-link img {
+                width: 20px;
+                height: 20px;
+            }
+            
             .container {
                 margin: 1rem auto;
                 padding: 0 1rem;
@@ -569,22 +574,7 @@
     </style>
 </head>
 <body>
-    <!-- 添加加载进度条覆盖层 -->
-    <div id="loading-overlay" class="loading-overlay">
-        <div class="loading-container">
-            <div class="loading-title">正在加载游戏</div>
-            <div class="loading-info">
-                <span class="loading-filename" id="loading-filename">准备中...</span>
-                <span class="loading-speed" id="loading-speed">0 KB/s</span>
-            </div>
-            <div class="progress-bar-container">
-                <div class="progress-bar" id="progress-bar">0%</div>
-            </div>
-            <div class="loading-details" id="loading-details">
-                已加载: <span id="loaded-size">0</span> / 总大小: <span id="total-size">0</span>
-            </div>
-        </div>
-    </div>
+    <!-- 移除页面顶部的加载覆盖层 -->
 
     <!-- 导航栏 -->
     <nav class="navbar">
@@ -772,7 +762,7 @@
             // 检查是否已经同意免责声明
             const hasAgreed = localStorage.getItem('disclaimerAgreed');
             
-            // 如果没有同意，显示免责声明
+            // 如果没有同意,显示免责声明
             if (!hasAgreed) {
                 showDisclaimer();
             } else {
@@ -868,7 +858,7 @@
                 loadGame(game);
             }).catch(error => {
                 console.error('Ruffle加载失败:', error);
-                showError('Flash模拟器加载失败，请刷新页面重试');
+                showError('Flash模拟器加载失败,请刷新页面重试');
             });
             
             setupControls();
@@ -928,9 +918,6 @@
                 const gamePath = `${baseUrl}/games/${game.id}/${game.file}`;
                 const gameBaseUrl = `${baseUrl}/games/${game.id}/`;
                 
-                console.log('Loading game from:', gamePath);
-                console.log('Game base URL:', gameBaseUrl);
-                
                 const loadingElement = document.getElementById('ruffle-loading');
                 const loadingText = document.querySelector('.ruffle-loading-text');
                 const progressContainer = document.getElementById('loading-progress-container');
@@ -954,7 +941,7 @@
                             gameLoadingProgress.total = parseInt(contentLength, 10);
                         }
                         
-                        // 显示进度条容器，隐藏"正在加载插件"文字
+                        // 显示进度条容器,隐藏"正在加载插件"文字
                         if (loadingText) {
                             loadingText.style.display = 'none';
                         }
@@ -997,9 +984,6 @@
                         });
                     })
                     .then(() => {
-                        console.log('Game loaded successfully');
-                        console.log('Game base path set to:', gameBaseUrl);
-                        
                         waitForGameDimensions().then(() => {
                             if (loadingElement) {
                                 loadingElement.style.display = 'none';
@@ -1013,7 +997,7 @@
                             loadingElement.style.display = 'none';
                         }
                         stopSpeedMonitoring();
-                        showError('加载游戏失败，请检查游戏文件是否存在');
+                        showError('加载游戏失败,请检查游戏文件是否存在');
                     });
                 
             } catch (error) {
