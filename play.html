@@ -655,12 +655,9 @@
         let currentScaleIndex = 2; // 默认100%缩放
         
         let loadingProgress = {
-            ruffle: { loaded: 0, total: 0, complete: false },
-            game: { loaded: 0, total: 0, complete: false }
+            ruffle: { loaded: 0, total: 850000, complete: false, startTime: 0 }, // Ruffle大约850KB
+            game: { loaded: 0, total: 0, complete: false, startTime: 0 }
         };
-        let loadingStartTime = Date.now();
-        let lastLoadedBytes = 0;
-        let lastUpdateTime = Date.now();
         let speedUpdateInterval = null;
         
         window.RufflePlayer = window.RufflePlayer || {};
@@ -701,15 +698,28 @@
             let totalLoaded = 0;
             let totalTotal = 0;
             let currentFilename = '';
+            let currentSpeed = 0;
             
             if (!loadingProgress.ruffle.complete) {
                 currentFilename = '正在加载插件';
                 totalLoaded = loadingProgress.ruffle.loaded;
-                totalTotal = loadingProgress.ruffle.total || totalLoaded || 100000;
+                totalTotal = loadingProgress.ruffle.total;
+                
+                // 计算Ruffle加载速度
+                const elapsed = (Date.now() - loadingProgress.ruffle.startTime) / 1000;
+                if (elapsed > 0) {
+                    currentSpeed = totalLoaded / elapsed;
+                }
             } else if (!loadingProgress.game.complete) {
                 currentFilename = '正在加载游戏文件';
                 totalLoaded = loadingProgress.ruffle.total + loadingProgress.game.loaded;
-                totalTotal = loadingProgress.ruffle.total + (loadingProgress.game.total || loadingProgress.game.loaded || 100000);
+                totalTotal = loadingProgress.ruffle.total + loadingProgress.game.total;
+                
+                // 计算游戏文件加载速度
+                const elapsed = (Date.now() - loadingProgress.game.startTime) / 1000;
+                if (elapsed > 0) {
+                    currentSpeed = loadingProgress.game.loaded / elapsed;
+                }
             }
             
             const percentage = totalTotal > 0 ? Math.min((totalLoaded / totalTotal) * 100, 100) : 0;
@@ -717,10 +727,13 @@
             progressBar.style.width = percentage + '%';
             progressBar.textContent = Math.round(percentage) + '%';
             loadingFilename.textContent = currentFilename;
+            loadingSpeed.textContent = formatSpeed(currentSpeed);
             
             // 更新文件大小显示
             loadedSize.textContent = formatBytes(totalLoaded);
             totalSize.textContent = formatBytes(totalTotal);
+            
+            console.log(`[v0] Progress: ${Math.round(percentage)}%, Speed: ${formatSpeed(currentSpeed)}`);
         }
         
         function formatBytes(bytes) {
@@ -740,29 +753,13 @@
         }
         
         function startSpeedMonitoring() {
-            lastLoadedBytes = 0;
-            lastUpdateTime = Date.now();
-            
             if (speedUpdateInterval) {
                 clearInterval(speedUpdateInterval);
             }
             
             speedUpdateInterval = setInterval(() => {
-                const currentTime = Date.now();
-                const timeElapsed = (currentTime - lastUpdateTime) / 1000; // 秒
-                
-                const totalLoaded = loadingProgress.ruffle.loaded + loadingProgress.game.loaded;
-                const bytesLoaded = totalLoaded - lastLoadedBytes;
-                const speed = timeElapsed > 0 ? bytesLoaded / timeElapsed : 0;
-                
-                const loadingSpeed = document.getElementById('loading-speed');
-                if (loadingSpeed) {
-                    loadingSpeed.textContent = formatSpeed(speed);
-                }
-                
-                lastLoadedBytes = totalLoaded;
-                lastUpdateTime = currentTime;
-            }, 500); // 每500ms更新一次速度
+                updateLoadingProgress();
+            }, 200); // 每200ms更新一次
         }
 
         function stopSpeedMonitoring() {
@@ -773,60 +770,28 @@
         }
         
         function monitorRuffleLoading() {
-            return new Promise((resolve, reject) => {
-                const script = document.querySelector('script[src*="ruffle"]');
+            return new Promise((resolve) => {
+                loadingProgress.ruffle.startTime = Date.now();
+                loadingProgress.ruffle.loaded = 0;
                 
-                if (!script) {
-                    console.warn('Ruffle script not found, using fallback');
-                    loadingProgress.ruffle.total = 800000;
-                    loadingProgress.ruffle.loaded = 800000;
-                    loadingProgress.ruffle.complete = true;
-                    updateLoadingProgress();
-                    resolve();
-                    return;
-                }
+                // 模拟Ruffle加载进度
+                const duration = 2000; // 预计加载2秒
+                const intervalTime = 50; // 每50ms更新一次
+                const increment = loadingProgress.ruffle.total / (duration / intervalTime);
                 
-                const scriptSrc = script.src;
-                
-                fetch(scriptSrc)
-                    .then(response => {
-                        const contentLength = response.headers.get('content-length');
-                        if (contentLength) {
-                            loadingProgress.ruffle.total = parseInt(contentLength, 10);
-                        }
-                        
-                        const reader = response.body.getReader();
-                        
-                        function readChunk() {
-                            return reader.read().then(({ done, value }) => {
-                                if (done) {
-                                    loadingProgress.ruffle.complete = true;
-                                    updateLoadingProgress();
-                                    resolve();
-                                    return;
-                                }
-                                
-                                loadingProgress.ruffle.loaded += value.length;
-                                if (!loadingProgress.ruffle.total) {
-                                    // 如果content-length未提供，则动态估算总大小
-                                    loadingProgress.ruffle.total = loadingProgress.ruffle.loaded * 2;
-                                }
-                                updateLoadingProgress();
-                                
-                                return readChunk();
-                            });
-                        }
-                        
-                        return readChunk();
-                    })
-                    .catch(error => {
-                        console.warn('Error monitoring Ruffle loading:', error);
-                        loadingProgress.ruffle.total = 800000;
-                        loadingProgress.ruffle.loaded = 800000;
+                const simulateInterval = setInterval(() => {
+                    loadingProgress.ruffle.loaded += increment;
+                    
+                    if (loadingProgress.ruffle.loaded >= loadingProgress.ruffle.total) {
+                        loadingProgress.ruffle.loaded = loadingProgress.ruffle.total;
                         loadingProgress.ruffle.complete = true;
-                        updateLoadingProgress();
+                        clearInterval(simulateInterval);
+                        console.log('[v0] Ruffle loading complete');
                         resolve();
-                    });
+                    }
+                    
+                    updateLoadingProgress();
+                }, intervalTime);
             });
         }
         
@@ -841,7 +806,7 @@
             // 检查是否已经同意免责声明
             const hasAgreed = localStorage.getItem('disclaimerAgreed');
             
-            // 如果没有同意，显示免责声明
+            // 如果没有同意,显示免责声明
             if (!hasAgreed) {
                 showDisclaimer();
             } else {
@@ -856,7 +821,7 @@
             
             if (!gameId) {
                 showError('缺少游戏ID参数');
-                return; // 移除hideLoadingOverlay()，因为它与新的加载逻辑不匹配
+                return;
             }
             
             loadGameData(gameId);
@@ -934,9 +899,10 @@
             `;
             
             loadingProgress = {
-                ruffle: { loaded: 0, total: 0, complete: false },
-                game: { loaded: 0, total: 0, complete: false }
+                ruffle: { loaded: 0, total: 850000, complete: false, startTime: Date.now() },
+                game: { loaded: 0, total: 0, complete: false, startTime: 0 }
             };
+            
             startSpeedMonitoring();
             
             // 先监控Ruffle加载，然后加载游戏
@@ -990,8 +956,8 @@
         function replayGame() {
             if (currentGameData) {
                 loadingProgress = {
-                    ruffle: { loaded: 0, total: 0, complete: false },
-                    game: { loaded: 0, total: 0, complete: false }
+                    ruffle: { loaded: 0, total: 850000, complete: false, startTime: Date.now() },
+                    game: { loaded: 0, total: 0, complete: false, startTime: 0 }
                 };
                 
                 const loadingElement = document.getElementById('ruffle-loading');
@@ -1026,11 +992,18 @@
                     loadingElement.style.display = 'flex';
                 }
                 
+                loadingProgress.game.startTime = Date.now();
+                
                 fetch(gamePath)
                     .then(response => {
                         const contentLength = response.headers.get('content-length');
                         if (contentLength) {
                             loadingProgress.game.total = parseInt(contentLength, 10);
+                            console.log('[v0] Game file size:', formatBytes(loadingProgress.game.total));
+                        } else {
+                            // 如果无法获取文件大小，使用一个估计值
+                            loadingProgress.game.total = 1000000; // 假设1MB
+                            console.log('[v0] Game file size unknown, using estimate');
                         }
                         
                         const reader = response.body.getReader();
@@ -1041,6 +1014,7 @@
                                 if (done) {
                                     loadingProgress.game.complete = true;
                                     updateLoadingProgress();
+                                    console.log('[v0] Game file loaded completely');
                                     
                                     const blob = new Blob(chunks);
                                     return blob.arrayBuffer();
@@ -1049,9 +1023,9 @@
                                 chunks.push(value);
                                 loadingProgress.game.loaded += value.length;
                                 
-                                if (!loadingProgress.game.total) {
-                                    // 如果content-length未提供，则动态估算总大小
-                                    loadingProgress.game.total = loadingProgress.game.loaded * 2;
+                                // 如果估计的总大小不够，动态增加
+                                if (loadingProgress.game.loaded > loadingProgress.game.total) {
+                                    loadingProgress.game.total = loadingProgress.game.loaded + 500000;
                                 }
                                 
                                 updateLoadingProgress();
@@ -1066,6 +1040,7 @@
                         const blob = new Blob([arrayBuffer]);
                         const url = URL.createObjectURL(blob);
                         
+                        console.log('[v0] Loading game into Ruffle player');
                         return currentGameInstance.load({
                             url: url,
                             base: gameBaseUrl
@@ -1100,50 +1075,7 @@
                 showError('创建游戏播放器失败');
             }
         }
-        
-        function waitForGameDimensions() {
-            return new Promise((resolve) => {
-                let attempts = 0;
-                const maxAttempts = 100; // 最多等待10秒
-                
-                const checkDimensions = setInterval(() => {
-                    attempts++;
-                    
-                    // 尝试获取游戏尺寸
-                    if (currentGameInstance && 
-                        currentGameInstance.metadata && 
-                        currentGameInstance.metadata.width && 
-                        currentGameInstance.metadata.height) {
-                        
-                        gameOriginalWidth = currentGameInstance.metadata.width;
-                        gameOriginalHeight = currentGameInstance.metadata.height;
-                        
-                        console.log(`Game dimensions detected: ${gameOriginalWidth}x${gameOriginalHeight}`);
-                        clearInterval(checkDimensions);
-                        
-                        // 设置Ruffle缩放配置
-                        if (currentGameInstance.config) {
-                            currentGameInstance.config.scale = 'showAll';
-                            currentGameInstance.config.align = 'center';
-                        }
-                        
-                        // 应用初始缩放
-                        applyScale();
-                        resolve();
-                        
-                    } else if (attempts >= maxAttempts) {
-                        // 超时后使用默认尺寸
-                        console.warn('Could not detect game dimensions, using defaults');
-                        gameOriginalWidth = 800;
-                        gameOriginalHeight = 600;
-                        clearInterval(checkDimensions);
-                        applyScale();
-                        resolve();
-                    }
-                }, 100);
-            });
-        }
-        
+
         // 缩放功能
         function zoomIn() {
             if (currentScaleIndex < scaleSteps.length - 1) {
