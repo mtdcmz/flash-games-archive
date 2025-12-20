@@ -1,0 +1,11 @@
+{
+"titles":[
+{"level":"1","name":"初入星途","getTask":"100013"},
+{"level":"2","name":"星星之火","getTask":"100021"},
+{"level":"3","name":"新星升起","getTask":"100042"}, 
+{"level":"4","name":"星火燎原","getTask":"100099"},
+{"level":"5","name":"星光熠熠","getTask":"100099"},
+{"level":"6","name":"星光闪耀","getTask":"100099"},
+{"level":"7","name":"万众一星","getTask":"100099"}
+]
+}

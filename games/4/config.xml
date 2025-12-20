@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+id				文件唯一标识
+src				文件地址
+type			文件类型[swf,txt,xml,jpg,mp3,png,gif,byte]
+size			预计文件大小，单位kb, -1为自动获取
+loadwhenstart	是否在游戏加载时加载
+team			分组 用来制作分组加载
+param			属性,部分数据类型需要使用的变量(csv文件使用此属性代来标识多重主键)
+description		描述
+--> 
+<config>
+
+	<!-- first load：最先加载的文件 --> 
+	<resource id="baseui" src="baseui.swf" type="swf" size="-1" loadwhenstart="1" team="" param="" description="基础ui" />
+
+	<!-- second load：确定进入游戏后加载的文件 -->
+	<resource id="gameui" src="gameui.swf" type="swf" size="-1" loadwhenstart="0" team="second" param="" description="游戏ui" />
+	<resource id="opui" src="opui.swf" type="swf" size="-1" loadwhenstart="0" team="op" param="" description="opui" />
+	
+	<resource id="setting" src="data/table/setting.json" type="json" size="-1" loadwhenstart="0" team="second" param="" description="设置" />
+	<resource id="setting2" src="data/table/setting2.json" type="json" size="-1" loadwhenstart="0" team="second" param="" description="设置2" />
+	
+	<resource id="clothes" src="data/table/clothes.json" type="json" size="-1" loadwhenstart="0" team="second" param="" description="服装表" />
+	<resource id="levels" src="data/table/levels.json" type="json" size="-1" loadwhenstart="0" team="second" param="" description="等级表" />
+	<resource id="tasks" src="data/table/tasks.json" type="json" size="-1" loadwhenstart="0" team="second" param="" description="任务表" />
+	<resource id="cards" src="data/table/cards.json" type="json" size="-1" loadwhenstart="0" team="second" param="" description="卡婊" />
+	<resource id="titles" src="data/table/titles.json" type="json" size="-1" loadwhenstart="0" team="second" param="" description="头衔表" />
+	<resource id="fashions" src="data/table/fashions.json" type="json" size="-1" loadwhenstart="0" team="second" param="" description="时尚周刊表" />
+	
+	<!-- GAoNano -->
+	<resource id="GAoNanoFileList" src="GAoNano/GAoNanoFileList.json" type="json" size="-1" loadwhenstart="0" team="second" param="" description="开始菜单bgm" />
+	<resource id="GAoNanoProject" src="GAoNano/GAoNanoProject.json" type="json" size="-1" loadwhenstart="0" team="second" param="" description="街道界面bgm" />
+	
+	<!-- 音乐音效 -->
+
+	<!-- 设定 -->
+	
+	<setting>
+		<para name="setting.autoSaveName" value="totalACG_3" des="存档标识"/>
+	</setting>
+	
+</config>
