@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON生成器 - MTDCMZ's Flash Games Archive</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #6a1b9a;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: #6a1b9a;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background-color: #4a148c;
+        }
+        
+        #game-list {
+            margin-top: 20px;
+        }
+        
+        .game-item {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #6a1b9a;
+        }
+        
+        .game-item button {
+            background-color: #e53935;
+            padding: 5px 10px;
+            margin-top: 5px;
+        }
+        
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>JSON生成器 - MTDCMZ's Flash Games Archive</h1>
+        
+        <div class="form-group">
+            <label for="game-id">游戏ID:</label>
+            <input type="text" id="game-id" placeholder="例如: game1">
+        </div>
+        
+        <div class="form-group">
+            <label for="game-name">游戏名称:</label>
+            <input type="text" id="game-name" placeholder="例如: 超级玛丽">
+        </div>
+        
+        <div class="form-group">
+            <label for="game-desc">游戏描述:</label>
+            <textarea id="game-desc" placeholder="例如: 这是一款经典的平台跳跃游戏..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="game-file">游戏文件名称:</label>
+            <input type="text" id="game-file" placeholder="例如: main.swf">
+        </div>
+        
+        <button id="add-game">添加游戏</button>
+        <button id="generate-json">生成JSON</button>
+        
+        <div id="game-list"></div>
+        
+        <div id="json-output" style="display: none;">
+            <h2>生成的JSON:</h2>
+            <pre id="json-content"></pre>
+            <button id="copy-json">复制JSON</button>
+        </div>
+    </div>
+
+    <script>
+        let games = [];
+        
+        document.getElementById('add-game').addEventListener('click', function() {
+            const id = document.getElementById('game-id').value;
+            const name = document.getElementById('game-name').value;
+            const desc = document.getElementById('game-desc').value;
+            const file = document.getElementById('game-file').value;
+            
+            if (!id || !name || !desc || !file) {
+                alert('请填写所有字段');
+                return;
+            }
+            
+            const game = { id, name, desc, file };
+            games.push(game);
+            
+            updateGameList();
+            clearForm();
+        });
+        
+        document.getElementById('generate-json').addEventListener('click', function() {
+            if (games.length === 0) {
+                alert('请先添加至少一个游戏');
+                return;
+            }
+            
+            const jsonOutput = JSON.stringify(games, null, 2);
+            document.getElementById('json-content').textContent = jsonOutput;
+            document.getElementById('json-output').style.display = 'block';
+        });
+        
+        document.getElementById('copy-json').addEventListener('click', function() {
+            const jsonContent = document.getElementById('json-content').textContent;
+            navigator.clipboard.writeText(jsonContent)
+                .then(() => alert('JSON已复制到剪贴板'))
+                .catch(err => alert('复制失败: ' + err));
+        });
+        
+        function updateGameList() {
+            const gameList = document.getElementById('game-list');
+            gameList.innerHTML = '<h2>已添加的游戏:</h2>';
+            
+            games.forEach((game, index) => {
+                const gameItem = document.createElement('div');
+                gameItem.className = 'game-item';
+                gameItem.innerHTML = `
+                    <strong>${game.name}</strong> (ID: ${game.id})
+                    <button onclick="removeGame(${index})">删除</button>
+                `;
+                gameList.appendChild(gameItem);
+            });
+        }
+        
+        function removeGame(index) {
+            games.splice(index, 1);
+            updateGameList();
+        }
+        
+        function clearForm() {
+            document.getElementById('game-id').value = '';
+            document.getElementById('game-name').value = '';
+            document.getElementById('game-desc').value = '';
+            document.getElementById('game-file').value = '';
+        }
+    </script>
+</body>
+</html>
